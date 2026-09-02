@@ -1,0 +1,119 @@
+# =============================================================================
+# website — the content grain: Page.
+#
+# PORT DECISIONS (source: docs/odoo/website/website — docs/spec.md §1.2):
+#  - The Odoo _inherits ir.ui.view shape is FENCED: the page row IS the
+#    content. The (key, website_id) specificity grain lives on this row
+#    directly — NULL website = the GENERIC row; a value = the
+#    website-specific row. Real same-schema FK with cascade for the
+#    specific arm (the family logical-ref rule applies only CROSS-schema).
+#  - `key` is IMMUTABLE after create (service-enforced) — the fork verbs
+#    match on it.
+#  - `is_published` is writable ONLY through the publish/unpublish verbs;
+#    it is excluded from every generic patch whitelist (the can-publish
+#    fence).
+#  - `date_publish` is evaluated LAZILY at read time — no cron ever flips
+#    it.
+#  - The upstream password-visibility tier + session-unlock machinery is
+#    fenced: visibility is the public/connected/restricted ladder, read
+#    policy only.
+# =============================================================================
+
+models:
+
+  - name: Page
+    collection: pages
+    read_only: true
+    description: "Page — the content grain. One row per (key, website) specificity arm: NULL website_id is the GENERIC template, a set website_id is that website's specific (the fork). The page row IS the content (no view-inherits); structured blocks hang off it. Read-only over HTTP: pages are created/patched/renamed/published/forked/fanout-deleted only through the typed verbs."
+    fields:
+      id:
+        type: uuid
+        attributes: ["@id", "@default(uuid)"]
+        description: "Unique record id"
+      key:
+        type: string
+        attributes: ["@required", "@max(120)", "@indexed"]
+        description: "THE specificity key — lowercase kebab-case slug, IMMUTABLE after create (service-enforced). Fork matching and the resolver's fold key on it. At most ONE live generic and ONE live specific per (key, website) — the hardening migration's COALESCE-sentinel partial unique."
+      website_id:
+        type: uuid?
+        attributes: ["@indexed", "@foreign_key(Website.websites)"]
+        description: "NULL = the GENERIC row (the template every website resolves when it lacks a specific); a value = the website-specific row. Real same-schema FK with cascade — deleting a website removes its specifics; the generic arm is simply unbound."
+      url:
+        type: string
+        attributes: ["@required", "@max(500)", "@indexed"]
+        description: "Routing path, normalized: starts '/', no trailing '/' except the root '/' itself, no '//', no dot-segments. Mutations go through the rename verb (which offers redirect generation). Per-website-scope live uniqueness rides the hardening migration."
+      title:
+        type: string
+        attributes: ["@required", "@max(200)"]
+        description: "The page title (officer-authored content)."
+      seo_name:
+        type: string?
+        attributes: ["@max(120)"]
+        description: "Slug-format preferred arm of the ONE slug utility (seo_name preference, fallback kebab of the title, id suffix)."
+      is_published:
+        type: boolean
+        attributes: ["@required", "@default(false)"]
+        description: "STORED publish state — writable ONLY through the publish/unpublish verbs; a PATCH carrying it refuses (typed website_field_not_patchable). Forking preserves it."
+      date_publish:
+        type: datetime?
+        description: "Scheduled publish, evaluated LAZILY at read time (date_publish IS NULL OR date_publish <= now()). No cron flips it, ever."
+      website_indexed:
+        type: boolean
+        attributes: ["@required", "@default(true)"]
+        description: "Gates sitemap inclusion (search is a deferred surface — not in the public allowlist at this increment)."
+      visibility:
+        type: WebsiteVisibility
+        attributes: ["@required", "@default(public)"]
+        lifecycle:
+          shape: hand_set
+          # No `state_machine:` ref — deliberate, recorded. DECLARATION OF
+          # RECORD: visibility is officer-set data read as policy by the
+          # public verbs (anonymous -> public only; verified principal ->
+          # public/connected + role-listed restricted; officers read their
+          # own trees). No transitions, no unlock machinery.
+        description: "THE read tier — public answers everyone; connected additionally answers verified portal principals; restricted additionally answers members whose role is listed in required_member_roles."
+      required_member_roles:
+        type: "string[]"
+        attributes: ["@required", "@default('{}')"]
+        description: "When visibility = 'restricted', which membership roles may read. Empty + restricted = nobody but officers."
+      forked_from:
+        type: uuid?
+        attributes: ["@exclude_from_foreign_key_check"]
+        description: "PROVENANCE — the generic row this specific was forked from (logical self-reference, no constraint: the source may itself be fanout-deleted after all websites hold specifics)."
+      forked_at:
+        type: datetime?
+        description: "PROVENANCE — when the fork landed."
+      forked_by:
+        type: uuid?
+        attributes: ["@exclude_from_foreign_key_check"]
+        description: "PROVENANCE — the acting officer (logical ref; this module has no sapiens edge)."
+      metadata:
+        type: Metadata
+        attributes: ["@audit_metadata"]
+        description: "Audit metadata"
+
+    relations:
+      website:
+        type: Website?
+        attributes: ["@one", "@foreign_key(website_id)", "@on_delete(cascade)"]
+        description: "The specific arm's website (real FK website.pages.website_id -> website.websites, cascade; NULL = the generic arm)"
+
+    indexes:
+      - type: index
+        fields: [key]
+        description: "The resolver's key arm (specific-then-generic fold)"
+      - type: index
+        fields: [url]
+        description: "The resolver's url arm and the redirect/canonical chain"
+
+enums:
+  - name: WebsiteVisibility
+    description: "THE read tier ladder — read policy evaluated fresh in every public verb (no stored compute, no unlock machinery)"
+    variants:
+      - name: public
+        description: "Answers every caller (the default)"
+        default: true
+      - name: connected
+        description: "Additionally answers VERIFIED portal principals (bearer through the fail-closed principal port)"
+      - name: restricted
+        description: "Additionally answers website members whose role is listed in required_member_roles (empty list = nobody but officers)"

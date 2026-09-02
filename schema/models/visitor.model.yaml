@@ -1,0 +1,103 @@
+# =============================================================================
+# website — the GDPR visitor shape: Visitor.
+#
+# PORT DECISIONS (source: docs/odoo/website/website — docs/spec.md §1.7):
+#  - HARD-DELETE model (opted out of the module's soft-delete convention):
+#    the GC verb hard-DELETEs and a GDPR erasure verb hard-DELETEs by
+#    principal — a soft-dead row would poison the digest upsert.
+#  - The digest identifies a BROWSER SESSION (HMAC-SHA256 over
+#    IP+UA+session-id keyed by the rotatable config pepper, domain-
+#    separated, versioned by digest_algo); it EXCLUDES website_id — rows
+#    are per-website, the (digest, website_id) pair is the upsert target,
+#    and the token is globally unique. The raw IP is NEVER persisted
+#    anywhere in this schema: the stored identity artifacts are the
+#    derived digest and the resolved country_code only.
+#  - access_token is a RANDOM 32-byte base64url value for BOTH kinds (the
+#    upstream partner-id-as-token enumeration oracle and the
+#    token-length-encodes-kind trick are dead); the kind column carries
+#    anonymous|identified explicitly.
+#  - There is NO public or officer CREATE verb for visitors — the
+#    heartbeat path is the only creator.
+# =============================================================================
+
+models:
+
+  - name: Visitor
+    collection: visitors
+    read_only: true
+    description: "Visitor — one per (browser session, website): the GDPR-shaped analytics grain. Identity artifacts are the keyed digest (derived, never the raw IP) and the resolved country only; the access token is random regardless of kind. Hard-delete model: the 60-day partnerless GC and the erasure verb DELETE rows outright."
+    fields:
+      id:
+        type: uuid
+        attributes: ["@id", "@default(uuid)"]
+        description: "Unique record id"
+      website_id:
+        type: uuid
+        attributes: ["@required", "@indexed", "@foreign_key(Website.websites)"]
+        description: "The website this visitor row belongs to — rows are PER-WEBSITE (the digest excludes website_id by design: cross-website visitor dedup is not a requirement and minimizes joinable identity). Real same-schema FK with cascade."
+      access_token:
+        type: string
+        attributes: ["@required", "@max(64)"]
+        description: "RANDOM 32-byte base64url value (43 chars) minted at insert for BOTH kinds — never derived from any identity datum, never upgraded on login. UNIQUE across all rows (the upstream global arm kept)."
+      kind:
+        type: WebsiteVisitorKind
+        attributes: ["@required", "@default(anonymous)"]
+        lifecycle:
+          shape: hand_set
+          # No `state_machine:` ref — deliberate, recorded. DECLARATION OF
+          # RECORD: anonymous -> identified is the ONE edge (the login
+          # merge's claim-in-place arm); there is no edge back. Set only
+          # by the merge verb.
+        description: "THE visitor kind — explicit column (no token-length encoding). 'anonymous' from heartbeat insert; 'identified' after the login merge claims or reparents the row."
+      digest:
+        type: string
+        attributes: ["@required", "@max(128)", "@indexed"]
+        description: "hex HMAC-SHA256 over 'website-visitor-v1\\n' + ip + '\\n' + user_agent + '\\n' + session_id, keyed by the rotatable WEBSITE_VISITOR_PEPPER. Identifies a browser session, NOT a person; never contains the raw IP as such. (digest, website_id) is UNIQUE — the heartbeat upsert target."
+      digest_algo:
+        type: string
+        attributes: ["@required", "@default('hmac-sha256-v1')", "@max(32)"]
+        description: "Versions the digest construction — a future algorithm change is a new value plus a migration decision, never an in-place reinterpretation."
+      portal_user_id:
+        type: uuid?
+        attributes: ["@indexed", "@exclude_from_foreign_key_check"]
+        description: "LOGICAL ref portal.PortalUser.id — set on the identified kind (the login merge). NULL for anonymous rows and for rows aged out before any merge."
+      country_code:
+        type: string?
+        attributes: ["@max(2)"]
+        description: "The RESOLVED country (ISO-3166 alpha-2) only. The raw IP is never persisted anywhere in this schema — no column, no log line, no metadata key."
+      visit_count:
+        type: integer
+        attributes: ["@required", "@default(0)"]
+        description: "Bumped by the heartbeat upsert when the previous connection is older than the 8-hour visit window."
+      last_connection_at:
+        type: datetime
+        attributes: ["@required", "@default(now)"]
+        description: "Last heartbeat touch. 'is connected' (active within 5 minutes) is DERIVED at read time, never stored."
+      metadata:
+        type: Metadata
+        attributes: ["@audit_metadata"]
+        description: "Audit metadata (timestamps only in practice — no request metadata may ever be written here)"
+
+    relations:
+      website:
+        type: Website
+        attributes: ["@one", "@foreign_key(website_id)", "@on_delete(cascade)"]
+        description: "The website this visitor row belongs to (real FK website.visitors.website_id -> website.websites, cascade)"
+
+    indexes:
+      - type: unique
+        fields: [access_token]
+        description: "The upstream global token arm kept — tokens are globally unique"
+      - type: unique
+        fields: [digest, website_id]
+        description: "The heartbeat upsert target — one visitor row per (browser session, website)"
+
+enums:
+  - name: WebsiteVisitorKind
+    description: "THE visitor kind — explicit column (anonymous vs identified); no token-length encoding exists"
+    variants:
+      - name: anonymous
+        description: "Minted by the heartbeat with no verified principal attached"
+        default: true
+      - name: identified
+        description: "Claimed by (or reparented onto) a portal principal through the login merge"

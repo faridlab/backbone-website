@@ -1,0 +1,91 @@
+# =============================================================================
+# website — the menu tree: Menu.
+#
+# PORT DECISIONS (source: docs/odoo/website/website — docs/spec.md §1.4):
+#  - Menus are ALWAYS per-website (website_id NOT NULL): the upstream
+#    NULL-website "transient fan-out source" is dead — fan-out is an
+#    explicit verb option, never an implicit create side effect.
+#  - The upstream cross-website same-url cascade delete is NOT ported
+#    (its blast radius — deleting one child silently deleting same-url
+#    menus on every other website — is a recorded upstream latent risk):
+#    menu deletion is local to its website.
+#  - Depth <= 2 below root and mega-menu isolation (a mega-menu has no
+#    parent and no children) are SERVICE validations with probes — no
+#    trigger machinery.
+#  - The upstream group-visibility rule ports as declared read policy
+#    (visibility + required_member_roles read by the public menu verb).
+# =============================================================================
+
+models:
+
+  - name: Menu
+    collection: menus
+    read_only: true
+    description: "Menu — one node of a website's menu tree. Tree order is (parent, sequence, id); a node targets either a page (page_id — re-pointed by the fork/rename verbs) or a free url. Read-only over HTTP: menus are created/patched/fanned-out/deleted only through the typed verbs."
+    fields:
+      id:
+        type: uuid
+        attributes: ["@id", "@default(uuid)"]
+        description: "Unique record id"
+      website_id:
+        type: uuid
+        attributes: ["@required", "@indexed", "@foreign_key(Website.websites)"]
+        description: "The owning website — ALWAYS set (menus are never transient cross-website templates; fan-out is an explicit verb). Real same-schema FK with cascade."
+      parent_id:
+        type: uuid?
+        attributes: ["@indexed", "@foreign_key(Menu.menus)"]
+        description: "The parent node (NULL = root). Depth <= 2 below root is a service validation (probed) — no trigger machinery."
+      name:
+        type: string
+        attributes: ["@required", "@max(120)"]
+        description: "The entry label."
+      page_id:
+        type: uuid?
+        attributes: ["@indexed", "@exclude_from_foreign_key_check"]
+        description: "LOGICAL ref Page.id — when set, the entry targets that page's url. Deliberately logical (not an FK): the fork and rename verbs re-point menus in bulk across the specificity fold, and a hard FK would turn a re-point into a constraint dance. NULL when the entry targets a free url."
+      url:
+        type: string?
+        attributes: ["@max(500)"]
+        description: "External or anchor target ('https://…', '#anchor'). NULL when page-bound."
+      new_window:
+        type: boolean
+        attributes: ["@required", "@default(false)"]
+        description: "Open-in-new-window hint for the webapp."
+      sequence:
+        type: integer
+        attributes: ["@required", "@default(10)"]
+        description: "Tree order within the parent — (parent, sequence, id)."
+      visibility:
+        type: WebsiteVisibility
+        attributes: ["@required", "@default(public)"]
+        description: "The read tier — same ladder as pages, evaluated by the public menu-tree verb."
+      required_member_roles:
+        type: "string[]"
+        attributes: ["@required", "@default('{}')"]
+        description: "When visibility = 'restricted', which membership roles see the entry (the upstream group rule ported as declared read policy)."
+      is_mega_menu:
+        type: boolean
+        attributes: ["@required", "@default(false)"]
+        description: "EXPLICIT hand-set flag (the upstream compute-on-content-truthiness dies with stored HTML). Validated: a mega-menu has no parent and no children — its content lives in menu_blocks."
+      metadata:
+        type: Metadata
+        attributes: ["@audit_metadata"]
+        description: "Audit metadata"
+
+    relations:
+      website:
+        type: Website
+        attributes: ["@one", "@foreign_key(website_id)", "@on_delete(cascade)"]
+        description: "The owning website (real FK website.menus.website_id -> website.websites, cascade)"
+      parent:
+        type: Menu?
+        attributes: ["@one", "@foreign_key(parent_id)", "@on_delete(cascade)"]
+        description: "The parent node (real FK website.menus.parent_id -> website.menus, cascade — deleting a parent takes its subtree)"
+
+    indexes:
+      - type: index
+        fields: [website_id, parent_id, sequence]
+        description: "The tree read (per-website, ordered by (parent, sequence, id))"
+      - type: index
+        fields: [page_id]
+        description: "The fork/rename re-point arm (menus bound to a page move with it)"

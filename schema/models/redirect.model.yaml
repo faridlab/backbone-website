@@ -1,0 +1,78 @@
+# =============================================================================
+# website — the SEO redirect table: Redirect.
+#
+# PORT DECISIONS (source: docs/odoo/website/website — docs/spec.md §1.6):
+#  - One redirect answer per path per website (live partial unique in the
+#    hardening migration) — ambiguous stacked rules are impossible at the
+#    DB.
+#  - For alias_308 rows, PARAM PARITY is validated at write time: url_to
+#    must carry the same query-parameter names as url_from.
+#  - The page rename verb generates rows here; downstream consumers
+#    (blog stale-slug 301s) record through the exported WebsiteSurface.
+# =============================================================================
+
+models:
+
+  - name: Redirect
+    collection: redirects
+    read_only: true
+    description: "Redirect — one declared routing answer: requests for url_from on this website answer with the redirect_type disposition (301/302/308 to url_to, or 410-gone as not-found). Read-only over HTTP: rows are written by the redirect verbs and the page rename verb."
+    fields:
+      id:
+        type: uuid
+        attributes: ["@id", "@default(uuid)"]
+        description: "Unique record id"
+      website_id:
+        type: uuid
+        attributes: ["@required", "@indexed", "@foreign_key(Website.websites)"]
+        description: "The owning website. Real same-schema FK with cascade."
+      url_from:
+        type: string
+        attributes: ["@required", "@max(500)"]
+        description: "The source path, normalized like pages.url. Live-unique per website (the hardening partial unique) — exactly one redirect answer per path."
+      redirect_type:
+        type: WebsiteRedirectType
+        attributes: ["@required", "@default(found_302)"]
+        lifecycle:
+          shape: hand_set
+          # No `state_machine:` ref — deliberate, recorded. DECLARATION OF
+          # RECORD: the disposition is officer-set data consumed by the
+          # routing matcher (case 7). No transitions.
+        description: "THE disposition — moved_301 / found_302 / alias_308 / gone_404."
+      url_to:
+        type: string?
+        attributes: ["@max(500)"]
+        description: "The target path. Required unless redirect_type = 'gone_404'. For 'alias_308', PARAM PARITY is validated at write time (the same query-parameter names as url_from)."
+      description:
+        type: string?
+        attributes: ["@max(500)"]
+        description: "Operator note (why the redirect exists)."
+      metadata:
+        type: Metadata
+        attributes: ["@audit_metadata"]
+        description: "Audit metadata"
+
+    relations:
+      website:
+        type: Website
+        attributes: ["@one", "@foreign_key(website_id)", "@on_delete(cascade)"]
+        description: "The owning website (real FK website.redirects.website_id -> website.websites, cascade)"
+
+    indexes:
+      - type: index
+        fields: [website_id, url_from]
+        description: "The matcher's redirect-table lookup arm"
+
+enums:
+  - name: WebsiteRedirectType
+    description: "The redirect disposition — consumed by the routing matcher (case 7) and the /public/resolve verb"
+    variants:
+      - name: moved_301
+        description: "Permanent redirect — 301 to url_to"
+      - name: found_302
+        description: "Temporary redirect — 302 to url_to (the default)"
+        default: true
+      - name: alias_308
+        description: "Permanent redirect preserving the method and body — 308 to url_to; param parity with url_from validated at write"
+      - name: gone_404
+        description: "Gone — answers not-found with no target (url_to stays NULL)"

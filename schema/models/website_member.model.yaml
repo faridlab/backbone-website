@@ -1,0 +1,74 @@
+# =============================================================================
+# website — the per-website principal pairing: WebsiteMember.
+#
+# PORT DECISIONS (source: docs/odoo/website/website — docs/spec.md §1.9):
+#  - The upstream unique(login, website_id) on res.users does NOT move into
+#    portal (portal's email fence is deliberately GLOBAL among live rows
+#    and portal carries no website axis). It lives HERE: the same portal
+#    principal (login = email, globally unique in portal) may hold at most
+#    ONE membership per website and may appear on MANY websites — the
+#    upstream constraint's intention holds by construction, without
+#    weakening portal's fence.
+#  - The role ladder is TWO-VALUE at this increment: 'member' unlocks
+#    connected/restricted-tier reads; 'editor' additionally marks content
+#    authority for downstream consumers (the dormant seam a later
+#    increment activates — no current verb consults it beyond read
+#    visibility).
+#  - The bootstrap-minted public principal may never appear here (service
+#    refusal, probe-asserted).
+# =============================================================================
+
+models:
+
+  - name: WebsiteMember
+    collection: website_members
+    read_only: true
+    description: "Website Member — the per-website principal pairing. One row per (portal principal, website): the membership that unlocks connected-tier and role-listed restricted-tier reads on that website's public surface, and the seam downstream consumers (editor authority) activate. Read-only over HTTP: memberships are managed through the officer membership verbs."
+    fields:
+      id:
+        type: uuid
+        attributes: ["@id", "@default(uuid)"]
+        description: "Unique record id"
+      website_id:
+        type: uuid
+        attributes: ["@required", "@indexed", "@foreign_key(Website.websites)"]
+        description: "The website this membership is on. Real same-schema FK with cascade — deleting a website removes its memberships."
+      portal_user_id:
+        type: uuid
+        attributes: ["@required", "@indexed", "@exclude_from_foreign_key_check"]
+        description: "LOGICAL ref portal.PortalUser.id — the paired principal. Keys on the portal-user ROW (portal.portal_users(id), no DB constraint — cross-module migration independence)."
+      role:
+        type: WebsiteMemberRole
+        attributes: ["@required", "@default(member)"]
+        lifecycle:
+          shape: hand_set
+          # No `state_machine:` ref — deliberate, recorded. DECLARATION OF
+          # RECORD: role is hand-set by the officer membership verbs and
+          # read as data by the visibility tiers. There are no automatic
+          # transitions.
+        description: "THE membership role — 'member' unlocks connected reads and restricted reads that list it; 'editor' additionally marks content authority for downstream consumers (no current verb consults it beyond read visibility)."
+      metadata:
+        type: Metadata
+        attributes: ["@audit_metadata"]
+        description: "Audit metadata"
+
+    relations:
+      website:
+        type: Website
+        attributes: ["@one", "@foreign_key(website_id)", "@on_delete(cascade)"]
+        description: "The website this membership belongs to (real FK website.website_members.website_id -> website.websites, cascade)"
+
+    indexes:
+      - type: unique
+        fields: [portal_user_id, website_id]
+        description: "The upstream unique(login, website_id) intent, re-homed: one membership per (portal principal, website) — both arms NOT NULL, a plain table-level unique"
+
+enums:
+  - name: WebsiteMemberRole
+    description: "The membership role ladder — hand-set, read as data by the visibility tiers"
+    variants:
+      - name: member
+        description: "Unlocks connected-tier reads and restricted-tier reads whose required_member_roles list 'member'"
+        default: true
+      - name: editor
+        description: "Everything 'member' unlocks, plus the content-authority mark downstream consumers (blog, livechat, storefront) activate — dormant at this increment"

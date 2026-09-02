@@ -1,0 +1,60 @@
+# =============================================================================
+# website — mega-menu content: MenuBlock.
+#
+# PORT DECISIONS (source: docs/odoo/website/website — docs/spec.md §1.5):
+#  - Same structured-content shape as page_blocks: typed jsonb payloads
+#    validated per kind (link / link_group / highlight), deny_unknown_fields.
+#  - The upstream mega_menu_content (sanitize=False raw HTML) is dead —
+#    no un-sanitized HTML is stored anywhere in this module.
+# =============================================================================
+
+models:
+
+  - name: MenuBlock
+    collection: menu_blocks
+    read_only: true
+    description: "Menu Block — one structured unit of a mega-menu's content list. Payload validated per kind by typed serde with deny_unknown_fields. Read-only over HTTP: blocks ride the menu verbs."
+    fields:
+      id:
+        type: uuid
+        attributes: ["@id", "@default(uuid)"]
+        description: "Unique record id"
+      menu_id:
+        type: uuid
+        attributes: ["@required", "@indexed", "@foreign_key(Menu.menus)"]
+        description: "The owning mega-menu node. Real same-schema FK with cascade."
+      kind:
+        type: WebsiteMenuBlockKind
+        attributes: ["@required"]
+        description: "The CLOSED mega-menu vocabulary — determines the payload's typed shape."
+      position:
+        type: integer
+        attributes: ["@required"]
+        description: "Render order within the menu."
+      payload:
+        type: json
+        attributes: ["@required"]
+        description: "The typed content: link {label, url, page_id?}; link_group {label, children: [link…]}; highlight {label, url, blurb?}. Unknown fields are unparseable at the verb edge."
+
+    relations:
+      menu:
+        type: Menu
+        attributes: ["@one", "@foreign_key(menu_id)", "@on_delete(cascade)"]
+        description: "The owning menu node (real FK website.menu_blocks.menu_id -> website.menus, cascade)"
+
+    indexes:
+      - type: index
+        fields: [menu_id, position]
+        description: "The ordered menu-block read"
+
+enums:
+  - name: WebsiteMenuBlockKind
+    description: "The CLOSED mega-menu content vocabulary"
+    variants:
+      - name: link
+        description: "A single link — payload {label, url, page_id?}"
+        default: true
+      - name: link_group
+        description: "A labeled group of links — payload {label, children: [link…]}"
+      - name: highlight
+        description: "A emphasized feature entry — payload {label, url, blurb?}"

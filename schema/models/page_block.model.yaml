@@ -1,0 +1,68 @@
+# =============================================================================
+# website — structured content: PageBlock.
+#
+# PORT DECISIONS (source: docs/odoo/website/website — docs/spec.md §1.3):
+#  - The QWeb view-is-content shape is fenced: content is STRUCTURED —
+#    typed jsonb payloads validated per kind by serde structs with
+#    deny_unknown_fields. No un-sanitized HTML is stored anywhere in this
+#    module (rich_text carries markdown; image urls point at
+#    webapp/object-storage-owned media — this module stores no media).
+#  - The kind vocabulary is CLOSED: widening it is a schema change, never
+#    a runtime option.
+#  - fork_to_website copies the full block set, positions preserved.
+# =============================================================================
+
+models:
+
+  - name: PageBlock
+    collection: page_blocks
+    read_only: true
+    description: "Page Block — one structured content unit in a page's ordered block list. The payload is validated per kind (typed serde, deny_unknown_fields) at every write verb. Read-only over HTTP: blocks ride the page verbs (create/patch/fork copy them wholesale)."
+    fields:
+      id:
+        type: uuid
+        attributes: ["@id", "@default(uuid)"]
+        description: "Unique record id"
+      page_id:
+        type: uuid
+        attributes: ["@required", "@indexed", "@foreign_key(Page.pages)"]
+        description: "The owning page. Real same-schema FK with cascade — deleting a page removes its blocks."
+      kind:
+        type: WebsitePageBlockKind
+        attributes: ["@required"]
+        description: "The CLOSED content vocabulary — determines the payload's typed shape."
+      position:
+        type: integer
+        attributes: ["@required"]
+        description: "Render order within the page (the block list is ordered by position)."
+      payload:
+        type: json
+        attributes: ["@required"]
+        description: "The typed content: heading {text, level?}; rich_text {markdown} (markdown, never trusted HTML); image {url, alt?} (media lives in the webapp/object storage — this module stores no media); cta {label, url, style?}; spacer {}. Unknown fields are unparseable at the verb edge."
+
+    relations:
+      page:
+        type: Page
+        attributes: ["@one", "@foreign_key(page_id)", "@on_delete(cascade)"]
+        description: "The owning page (real FK website.page_blocks.page_id -> website.pages, cascade)"
+
+    indexes:
+      - type: index
+        fields: [page_id, position]
+        description: "The ordered block-list read (page DTOs carry their blocks)"
+
+enums:
+  - name: WebsitePageBlockKind
+    description: "The CLOSED page-content vocabulary — widening it is a schema change, never a runtime option"
+    variants:
+      - name: heading
+        description: "A section heading — payload {text, level?}"
+        default: true
+      - name: rich_text
+        description: "Markdown prose — payload {markdown} (never trusted HTML)"
+      - name: image
+        description: "A media reference — payload {url, alt?}; the bytes live in webapp/object storage"
+      - name: cta
+        description: "A call-to-action link — payload {label, url, style?}"
+      - name: spacer
+        description: "Vertical whitespace — payload {}"

@@ -1,0 +1,63 @@
+# =============================================================================
+# website — the reference intake target: ContactMessage.
+#
+# PORT DECISIONS (source: docs/odoo/website/website — docs/spec.md §1.10):
+#  - The one concrete intake verb's target (the reference
+#    IntakeDeclaration, name 'contact'). Written ONLY through the intake
+#    executor as the ordinary app role — no sudo, no elevation.
+#  - NO request-metadata columns exist and none may ever be added: no IP,
+#    no user-agent, no referer may land on an intake row (the GDPR death
+#    — the verbs never grow a metadata capture).
+#  - The submitter email is a reply-to RETAINED FOR OFFICERS (they reply
+#    through their own mail tools); the module itself NEVER sends mail to
+#    it. Fixed-recipient notification rides the host-installed
+#    IntakeNotifier port; unwired = WARN + notified=false, the write is
+#    never refused.
+# =============================================================================
+
+models:
+
+  - name: ContactMessage
+    collection: contact_messages
+    read_only: true
+    description: "Contact Message — one contact-form submission on a website: the reference intake target. Carries the submitter's name/reply-to/message and the notifier delivery flag. No request metadata may ever be captured here."
+    fields:
+      id:
+        type: uuid
+        attributes: ["@id", "@default(uuid)"]
+        description: "Unique record id"
+      website_id:
+        type: uuid
+        attributes: ["@required", "@indexed", "@foreign_key(Website.websites)"]
+        description: "The website the form was submitted on (resolved from the request hostname by the intake executor). Real same-schema FK with cascade."
+      name:
+        type: string?
+        attributes: ["@max(120)"]
+        description: "The submitter's stated name (optional)."
+      email:
+        type: string
+        attributes: ["@required", "@max(320)"]
+        description: "The submitter's reply-to — retained for OFFICERS to reply through their own mail tools. The module never sends mail to this address, and no anonymous mail exists anywhere in this module."
+      message:
+        type: string
+        attributes: ["@required", "@max(5000)"]
+        description: "The submission body."
+      notified:
+        type: boolean
+        attributes: ["@required", "@default(false)"]
+        description: "Flipped when the host-installed IntakeNotifier port reports delivery. Unwired port = one WARN and this stays false; the write itself is never refused."
+      metadata:
+        type: Metadata
+        attributes: ["@audit_metadata"]
+        description: "Audit metadata (timestamps/actors only — no request metadata may ever be written here)"
+
+    relations:
+      website:
+        type: Website
+        attributes: ["@one", "@foreign_key(website_id)", "@on_delete(cascade)"]
+        description: "The website the message was submitted on (real FK website.contact_messages.website_id -> website.websites, cascade)"
+
+    indexes:
+      - type: index
+        fields: [website_id]
+        description: "The officer intake read (per-website, newest first)"

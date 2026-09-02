@@ -1,0 +1,141 @@
+# Codegen policy for website.
+#
+# `user_owned` globs are hand-written files that live inside generator-owned
+# trees but are NOT schema-derived. `metaphor schema generate [--force]`
+# skips them wholesale (never reads, merges, or deletes them). Everything
+# else in src/ is regenerated from schema/models.
+#
+# Re-exports/declarations that must sit alongside generated code live inside
+# `// <<< CUSTOM ... // END CUSTOM` markers (lib.rs, application/service/
+# mod.rs, exports/services.rs) and are preserved by the marker mechanism,
+# not listed here.
+#
+# Declared BEFORE any file lands (the regen-safety contract): a landing
+# without the declaration is clobbered on the next regen; a declaration
+# without the file is the dangling class removed by review — later seats
+# extend this list on the same contract, declaring each hand file in the
+# same change that lands it.
+
+user_owned:
+  # ⚠ GENERATOR-DEFECT FREEZE (pinned generator only): for a `string[]`
+  # field combined with `@default('{}')` the generator emits a builder
+  # arm typed `Option<Vec<String>>` but defaulting through
+  # `serde_json::json!({})` — a type mismatch that cannot compile. The
+  # schema default stays (the DDL contract is `DEFAULT '{}'`); these
+  # three entity files are frozen at their generated state plus the
+  # one-line `.unwrap_or_default()` fix on the affected arms. Regen
+  # would re-emit the defect; unlist only after the generator fixes the
+  # string[]-with-json-default arm.
+  - "src/domain/entity/website.rs"
+  - "src/domain/entity/page.rs"
+  - "src/domain/entity/menu.rs"
+  # ⚠ GENERATOR-DEFECT FREEZE (pinned generator only): `rename_all =
+  # "snake_case"` on a sqlx::Type enum cannot round-trip schema labels
+  # with a digit-underscore boundary (`Moved301` maps to `moved301`,
+  # the DB stores `moved_301`). This enum entity is frozen at its
+  # generated state plus per-variant `#[sqlx(rename)]`/`#[serde(rename)]`
+  # labels. Regen would re-emit the defect; unlist only after the
+  # generator fixes digit-boundary snake_case mapping.
+  - "src/domain/entity/website_redirect_type.rs"
+
+  # The module's typed error surface (one enum, HTTP mappings) — shared by
+  # every hand service below.
+  - "src/application/service/website_error.rs"
+
+  # THE generic-vs-specific resolver — the single fold both resolution
+  # entry points compose (the one-file grep invariant; no other file in
+  # this crate may write the `website_id IS NULL` arm).
+  - "src/application/service/specificity.rs"
+
+  # The ONE slug utility (seo_name preference, abs(id) retry) — every
+  # generated external reference in the module family goes through it.
+  - "src/application/service/slug.rs"
+
+  # The 9-case routing decision table (bot-never-redirect, POST-never-
+  # bounce, normalization 301s, lang rows, redirect-table reroute,
+  # canonical-301, terminal) — one ordered const array, row-probed.
+  - "src/application/service/lang_matcher.rs"
+
+  # Website root verbs: create+bootstrap (homepage page, root menu, the
+  # minted public principal), hostname binding, derived primary-website
+  # read + delete guard, the company allow-list derivation.
+  - "src/application/service/website_service.rs"
+
+  # Page verbs: CRUD with the immutable key, the typed patch whitelist
+  # (is_published never patchable), publish/unpublish (the fence verbs),
+  # rename + redirect generation, public visibility reads, sitemap.
+  - "src/application/service/page_service.rs"
+
+  # Menu tree verbs: depth<=2 + mega-menu isolation validations, the
+  # explicit fan-out copy, local-only delete.
+  - "src/application/service/menu_service.rs"
+
+  # The explicit versioning verbs: fork_to_website (COW, idempotent,
+  # concurrent-race safe) and delete_generic_with_fanout (COU).
+  - "src/application/service/versioning_service.rs"
+
+  # Redirect CRUD + the 308 param-parity write validation.
+  - "src/application/service/redirect_service.rs"
+
+  # Visitor verbs: the one-statement heartbeat upsert (digest + random
+  # token, track CTE riding), login merge both arms, GDPR erasure.
+  - "src/application/service/visitor_service.rs"
+
+  # The partnerless-visitor GC sweep (hard delete, batched,
+  # commit-progress; the cron verb).
+  - "src/application/service/visitor_gc.rs"
+
+  # The intake executor + IntakeDeclaration trait: website resolution ->
+  # turnstile (fail-closed, unset != misconfigured) -> Tier B per-identity
+  # +per-IP windows -> per-verb savepoint -> plain-role persist.
+  - "src/application/service/intake_engine.rs"
+
+  # The reference intake declaration (contact) targeting
+  # website.contact_messages.
+  - "src/application/service/intake_contact.rs"
+
+  # The fail-closed portal-principal verifier port: the module owns the
+  # trait + the refusing default; the host installs the adapter over
+  # backbone-portal's verification surface. Unwired = every non-public
+  # tier reads 403.
+  - "src/application/service/principal_port.rs"
+
+  # The fixed-recipient intake notifier port: host-installed; unwired =
+  # one WARN + notified=false, the write never refused, the submitter
+  # never mailed.
+  - "src/application/service/notifier_port.rs"
+
+  # The exported trait contract downstream modules (blog, livechat, the
+  # events/eCommerce and lead-capture increments) consume — resolve-by-
+  # host, visible page/menu reads, redirect answer/record, company
+  # allow-list, visit tracking, visitor sweep.
+  - "src/application/service/website_surface.rs"
+
+  # The declared public read allowlist tree (pages/menus/sitemap/robots/
+  # resolve/heartbeat/intake). The module does NOT self-mount this — the
+  # host nests it bare of company_auth at /api/v1/website.
+  - "src/presentation/http/public_routes.rs"
+
+  # The officer tree (websites/pages/menus/redirects/visitors/intake
+  # reads + the write verbs). The host mounts it behind company_auth with
+  # the module-write gate keyed "website" as the innermost route layer.
+  - "src/presentation/http/admin_routes.rs"
+
+  # Hand-written DDL hardening: the COALESCE-sentinel partial unique
+  # indexes (specificity, url scope, live domain, public principal,
+  # redirect url_from) — the DB fences the resolver's single-row claims.
+  - "migrations/*hardening*"
+
+  # Hand-authored module documentation (root docs + the frozen build
+  # contract).
+  - "README.md"
+  - "SPEC.md"
+  - "docs/**"
+
+  # The fail-hard probe suite (fresh scratch DB per test on 5433; a
+  # missing scratch Postgres panics the suite rather than skipping) —
+  # the concurrent-fork DoD probe, the publish fence, the public
+  # negative-enumeration contract, the visitor GDPR shape, the intake
+  # refusal table, the matcher rows, the slug arms, the mount
+  # introspection.
+  - "tests/**"

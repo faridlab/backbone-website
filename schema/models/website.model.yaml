@@ -1,0 +1,76 @@
+# =============================================================================
+# website — the website root: Website.
+#
+# PORT DECISIONS (source: docs/odoo/website/website — docs/spec.md §1.1):
+#  - The per-website PUBLIC PRINCIPAL is a column here (public_user_id,
+#    logical ref portal.portal_users(id)): what is publicly enumerable is
+#    exactly what that principal's declared read verbs return (WS-8).
+#    Minted by the create_website bootstrap verb; officers act, the ghost
+#    principal never logs in.
+#  - Domain is nullable and NORMALIZED (trim, lowercase, no scheme, no
+#    trailing /, no dot-segments) at the service layer; ONE live website
+#    may be domainless (the default slot) — enforced by the hand hardening
+#    migration's COALESCE sentinel unique, a deliberate tightening of
+#    upstream which allows an unbounded pile of unreachable roots.
+#  - Read-only over HTTP (`read_only: true`): every write goes through the
+#    typed verbs (create/bootstrap, the config patch, the guarded delete).
+# =============================================================================
+
+models:
+
+  - name: Website
+    collection: websites
+    read_only: true
+    description: "Website — the website root. One row per site: its normalized domain (hostname binding resolves requests to this row), the per-website public principal, the single default language code, homepage url, verbatim robots.txt, data-only social links, officer intake-recipient mailboxes, and the sequence driving the derived primary-website read. Read-only over HTTP: created only through the bootstrap verb (which seeds the homepage page and root menu and mints the public principal), patched only through the config-fields verb, deleted only through the derived-primary-guarded delete verb."
+    fields:
+      id:
+        type: uuid
+        attributes: ["@id", "@default(uuid)"]
+        description: "Unique record id"
+      name:
+        type: string
+        attributes: ["@required", "@max(120)"]
+        description: "Human-facing website name (officer label)."
+      domain:
+        type: string?
+        attributes: ["@max(255)"]
+        description: "The hostname this website answers on (normalized: trimmed, lowercased, no scheme, no port, no trailing slash, no dot-segments — service-validated). Nullable: ONE live website may be domainless (the default slot; the hardening migration's COALESCE-sentinel partial unique refuses a second). Hostname binding matches this value exactly — no session force flag, no first-website fallback."
+      company_id:
+        type: uuid
+        attributes: ["@required", "@indexed", "@exclude_from_foreign_key_check", "@global"]
+        description: "LOGICAL ref organization.Company.id (the family rule: cross-schema references are indexed uuids with no DB constraint — the company table lives in the organization module). Marked @global and NOT a fence: reads are gated by the declared verb surface, never by this column (ADR-0014 posture 4 — the module declares company_fence: none)."
+      public_user_id:
+        type: uuid
+        attributes: ["@required", "@indexed", "@exclude_from_foreign_key_check"]
+        description: "LOGICAL ref portal.PortalUser.id — THE per-website public principal, minted by the create_website bootstrap verb (officers act; the ghost principal never logs in). This is the enumeration principal: what is publicly enumerable is exactly what this principal's declared read verbs return. A portal principal is at most ONE website's public principal (the hardening partial unique)."
+      default_lang_code:
+        type: string
+        attributes: ["@required", "@default('en')", "@max(8)"]
+        description: "BCP-47 primary tag of the single default language. Single-default-language activation only — no language registry exists anywhere in this module (the matcher's alias row ships dormant until the language-registry increment)."
+      homepage_url:
+        type: string
+        attributes: ["@required", "@default('/')", "@max(500)"]
+        description: "The site's homepage routing path; must start with '/'. Synced by the page rename verb when the homepage page moves."
+      robots_txt:
+        type: string?
+        description: "Officer-writable free text served VERBATIM by the public robots verb. Sanitization is the webapp's concern; the module stores and serves bytes."
+      social_links:
+        type: json?
+        description: "Map of platform -> absolute URL, values validated server-side. Data-only: no module verb dereferences or redirects these (no open-redirect surface)."
+      contact_recipients:
+        type: "string[]"
+        attributes: ["@required", "@default('{}')"]
+        description: "Officer mailboxes for intake notifications. NEVER a submitter-supplied address — the intake path sends nothing to any submitter, ever."
+      sequence:
+        type: integer
+        attributes: ["@required", "@default(10)"]
+        description: "Drives the DERIVED primary-website read (lowest (sequence, id) among live rows for a company). No stored primary-website column exists anywhere; the delete verb refuses while a website is its company's derived primary."
+      metadata:
+        type: Metadata
+        attributes: ["@audit_metadata"]
+        description: "Audit metadata"
+
+    indexes:
+      - type: index
+        fields: [company_id, sequence]
+        description: "The derived primary-website read (lowest live (sequence, id) per company)"

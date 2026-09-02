@@ -1,0 +1,96 @@
+# =============================================================================
+# website — the audit vocabulary: WebsiteAuditLog (the portal shape).
+#
+# PORT DECISIONS (source: docs/odoo/website/website — docs/spec.md §1.11):
+#  - Append-only, service-emitted by the verbs. Rows are never updated,
+#    never deleted by application code.
+#  - The closed event vocabulary carries every security-relevant edge:
+#    publish refusals and intake refusals land here as INTAKE_REFUSED /
+#    PUBLISH_REFUSED, so a refused write is still a durable fact.
+# =============================================================================
+
+models:
+
+  - name: WebsiteAuditLog
+    collection: website_audit_log
+    read_only: true
+    description: "Website Audit Log — the durable verb trail. Append-only: every website create, page write/publish/fork/rename/fanout-delete, menu write/fanout, redirect write, visitor merge/GC sweep, intake receive/refusal, and publish refusal lands as one row with its structured detail."
+    fields:
+      id:
+        type: uuid
+        attributes: ["@id", "@default(uuid)"]
+        description: "Unique record id"
+      event:
+        type: WebsiteAuditEvent
+        attributes: ["@required", "@indexed"]
+        description: "WHAT happened — the closed enum (one row shape per security-relevant edge)."
+      actor:
+        type: uuid?
+        attributes: ["@exclude_from_foreign_key_check"]
+        description: "WHO performed it — the acting officer (logical ref; this module has no sapiens edge) or NULL for system edges (the GC sweep)."
+      subject_type:
+        type: string?
+        attributes: ["@max(120)"]
+        description: "The subject's entity kind ('website', 'page', 'menu', 'redirect', 'visitor', 'contact_message')."
+      subject_id:
+        type: uuid?
+        attributes: ["@exclude_from_foreign_key_check"]
+        description: "The subject's id, when the subject is a row."
+      detail:
+        type: json?
+        description: "Structured context (keys, target websites, created-id lists, refusal reasons) — facts only."
+      occurred_at:
+        type: datetime
+        attributes: ["@required", "@default(now)"]
+        description: "When the edge happened."
+
+    indexes:
+      - type: index
+        fields: [event, occurred_at]
+        description: "The per-event-kind timeline read"
+
+enums:
+  - name: WebsiteAuditEvent
+    description: "The closed audit vocabulary — every verb edge, including refusals"
+    variants:
+      - name: website_created
+        description: "A website root was bootstrapped (homepage page + root menu + minted public principal)"
+        default: true
+      - name: page_created
+        description: "A page row was created (generic or specific)"
+      - name: page_updated
+        description: "A page was patched through the typed whitelist"
+      - name: page_published
+        description: "The publish verb flipped is_published to true"
+      - name: page_unpublished
+        description: "The unpublish verb flipped is_published to false"
+      - name: page_forked
+        description: "fork_to_website created (or found) a website-specific copy"
+      - name: generic_deleted_with_fanout
+        description: "delete_generic_with_fanout force-forked every specific-less website then deleted the generic"
+      - name: page_renamed
+        description: "The rename verb moved a page's url (redirect row optionally generated)"
+      - name: menu_created
+        description: "A menu node was created"
+      - name: menu_updated
+        description: "A menu node was patched"
+      - name: menu_deleted
+        description: "A menu node was deleted (local to its website)"
+      - name: menu_fanout
+        description: "The explicit fan-out verb copied a menu to other websites"
+      - name: redirect_created
+        description: "A redirect row was written (verb or rename)"
+      - name: redirect_updated
+        description: "A redirect row was patched"
+      - name: redirect_deleted
+        description: "A redirect row was deleted"
+      - name: visitor_merged
+        description: "The login merge claimed or reparented an anonymous visitor"
+      - name: visitor_gc_swept
+        description: "The partnerless-visitor GC swept a batch (detail carries the count)"
+      - name: intake_received
+        description: "An intake verb persisted a submission"
+      - name: intake_refused
+        description: "An intake verb refused a submission (detail carries the typed refusal)"
+      - name: publish_refused
+        description: "A publish/unpublish attempt refused (permission or state)"

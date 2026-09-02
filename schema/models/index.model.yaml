@@ -1,0 +1,142 @@
+# =============================================================================
+# website Module - Schema Index
+# =============================================================================
+# Version: 2.0
+# Description: Module schema index. `module:` and `schema:` are stamped from
+# the module name. `schema: website` gives this module its OWN Postgres
+# schema (migrations emit `CREATE SCHEMA website` and qualify tables as
+# `website.<table>`) — the convention every backbone module follows (see
+# backbone-portal, backbone-foundation-ext). Do not remove it.
+#
+# Enum types are created UNQUALIFIED in the `public` schema (the module
+# convention, ratified). The seven names below were census-checked against
+# every module migration in the tree before landing (zero exact or stem
+# collisions; the nearest neighbors are the portal_*/survey_*/foundation_*
+# stems — all distinct from the website_* stems).
+# =============================================================================
+
+module: website
+version: 2
+schema: website
+description: "website — the headless website engine: per-website pages/menus with a single generic-vs-specific resolver backed by real unique(key, website_id) constraints, explicit copy-on-write/copy-on-unlink versioning verbs with provenance, the stored+derived+fenced publish contract, GDPR-shaped visitors (keyed digest, random tokens, no raw IP), turnstile-gated declared intake verbs, the SEO redirect table + table-driven language matcher (single-default-language activation), and a declared public read allowlist with a negative-enumeration posture (Odoo website port, headless)"
+
+# ADR-0014 company fence: the upstream Odoo website addon ships ZERO
+# company ir.rules — multi-website scoping is code (website_domain folded
+# into every read). The port declares that posture honestly as `none`: no
+# company-gating column, no RLS policy. Visibility is service-layer policy
+# in every read verb (the declared public read allowlist + tier checks);
+# tenant isolation remains the only DB fence. The company allow-list
+# DERIVATION (public principal -> [website.company_id]; member -> same;
+# otherwise -> []) is exported for family-side read models — derived,
+# never stored.
+company_fence: none
+
+config:
+  database: postgresql
+  soft_delete: true          # visitors/visitor_tracks opt OUT (hard-delete
+                             # models — the digest upsert forbids dead rows)
+  audit: true
+  default_timestamps: true
+  generators:
+    disabled:
+      - graphql
+      - grpc
+      - proto
+
+# Portal owns the public-principal identity. Every principal reference in
+# this schema keys on the portal-user ROW by LOGICAL ref (no DB constraint
+# — cross-module migration independence; portal v0.2.0 carries no website
+# axis and its own global email fence must not be weakened, so the
+# per-website pairing lives HERE in website.website_members).
+external_imports:
+  - module: portal
+    types: [PortalUser]
+
+# Shared value-object types available to all models in this module.
+shared_types:
+  Timestamps:
+    created_at:
+      type: datetime
+      attributes: ["@default(now)"]
+      description: "Record creation timestamp"
+    updated_at:
+      type: datetime
+      attributes: ["@updated_at"]
+      description: "Last update timestamp"
+    deleted_at:
+      type: datetime?
+      description: "Soft delete timestamp"
+
+  Actors:
+    # Plain nullable uuids — NO sapiens edge exists in this module (portal
+    # is the identity seam for public principals; officers authenticate
+    # through the host), so actor columns are logical refs by construction.
+    created_by:
+      type: uuid?
+      attributes: ["@exclude_from_foreign_key_check"]
+      description: "Officer who created this record (logical ref — no cross-schema constraint)"
+    updated_by:
+      type: uuid?
+      attributes: ["@exclude_from_foreign_key_check"]
+      description: "Officer who last updated this record (logical ref)"
+    deleted_by:
+      type: uuid?
+      attributes: ["@exclude_from_foreign_key_check"]
+      description: "Officer who deleted this record (logical ref)"
+
+  Metadata: [Timestamps, Actors]
+
+# Import each entity model (informational — discovery is a recursive glob,
+# but keeping the list accurate helps readers).
+imports:
+  - website.model.yaml        # Website
+  - website_member.model.yaml # WebsiteMember
+  - page.model.yaml           # Page
+  - page_block.model.yaml     # PageBlock
+  - menu.model.yaml           # Menu
+  - menu_block.model.yaml     # MenuBlock
+  - redirect.model.yaml       # Redirect
+  - visitor.model.yaml        # Visitor
+  - visitor_track.model.yaml  # VisitorTrack
+  - contact_message.model.yaml# ContactMessage
+  - website_audit_log.model.yaml # WebsiteAuditLog
+
+# =============================================================================
+# FLAG-ID COVERAGE — the register rows this module closes
+# (docs/odoo/website/website/; workspace register w7-register-deltas.md):
+#  WS-1  → ONE resolver (specificity.rs) + the COALESCE-sentinel partial
+#          unique (hardening migration) — constraint adopted, race closed.
+#  WS-2/WS-3 → explicit fork_to_website / delete_generic_with_fanout verbs
+#          with provenance columns; no ambient context, no no_cow hatch.
+#  WS-4  → declared service-layer policy (company_fence: none), never RLS.
+#  WS-5  → fenced: no QWeb view-is-content; pages ARE the content rows;
+#          blocks are structured jsonb validated per kind.
+#  WS-6  → publish contract: stored is_published + derived visibility +
+#          the publish-verb fence (§3 of docs/spec.md).
+#  WS-7  → public/connected/restricted tiers port as read policy; the
+#          password tier + session-unlock machinery NOT ported (fenced).
+#  WS-8  → per-website public principal = websites.public_user_id (logical
+#          FK portal.portal_users(id)); enumeration posture = allowlist.
+#  WS-9  → themes/asset bundles fenced (fence register, docs/spec.md §13).
+#  WS-10 → GDPR digest (HMAC pepper, rotatable), random tokens + kind,
+#          raw IP never persisted; SKIP LOCKED upsert; login merge + GC.
+#  WS-11 → declared intake verbs, typed allowlists, turnstile fail-closed,
+#          Tier B limits, per-verb savepoint, no sudo, loud 4xx, no
+#          anonymous mail (§6 of docs/spec.md).
+#  WS-12 → redirect table + 308 param-parity validation; URL-rewriting of
+#          generated links dies with server rendering (webapp consumes
+#          /public/resolve).
+#  WS-13 → #1 domain sentinel-unique; #2 dies with ControllerPage (fenced);
+#          #3 = unique(access_token); #4 = website_members pairing unique
+#          (portal_user_id, website_id) — website-side, portal untouched.
+#  WS-14 → cache machinery dead: fresh indexed reads; no cache tables.
+#  WS-15 → explicit fan-out verb option; cross-website cascade delete NOT
+#          ported; depth/mega validation service-side.
+#  WS-16 → the ONE slug utility (seo_name preference, abs(id) retry).
+#  WS-17 → all four public write paths + the /website/action runner
+#          dead-by-design (ADR-0019/0021) — recorded, not rebuilt.
+#  WS-18 → visitor GC ports (pull posture); snippet cron dies with assets.
+#  WS-19 → menu group visibility = declared read policy in menu verbs.
+#  WS-20 → real (key,website_id) + per-website url uniques; the suffix
+#          uniquification loop is dead.
+# =============================================================================

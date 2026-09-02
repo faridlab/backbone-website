@@ -1,0 +1,72 @@
+# website Module - Hooks Index
+# Version: 1
+#
+# Module-level configuration for hooks (lifecycle behaviors).
+#
+# This index carries the ZERO-outbox-event declaration and the ONE
+# scheduled job (the daily partnerless-visitor GC pull).
+
+module: website
+version: 1
+
+# The website module declares no hook files: no state machines (all
+# hand-set statuses are declared in their model files' lifecycle blocks),
+# no rules, no triggers, no computed fields.
+imports: []
+
+# =============================================================================
+# Module-level configuration
+# =============================================================================
+config:
+  audit:
+    retention_days: 365
+    critical_events:
+      - page_published          # the fence verb — publish state changed
+      - page_unpublished        # the fence verb — publish state changed
+      - publish_refused         # a publish attempt was refused (permission/state)
+      - intake_received         # a public submission landed
+      - intake_refused          # a public submission was refused
+
+  notifications:
+    email_enabled: false
+    sms_enabled: false
+    push_enabled: false
+
+# =============================================================================
+# Shared domain events
+# =============================================================================
+# ZERO website-owned outbox events by design. The module owns NO outbox
+# table and the host's outbox_schemas producer set carries no website
+# entry (absence is the truthful posture — adding one would arm a relay
+# runner that can never drain anything):
+#  - OUTBOUND notification for intake rides the host-installed
+#    IntakeNotifier port (fixed-recipient, never the submitter);
+#  - INBOUND, nothing subscribes: officer identity arrives through the
+#    host's company_auth, principal identity through the host-installed
+#    principal port over backbone-portal's verification surface.
+events: {}
+
+# =============================================================================
+# Scheduled jobs (ADR-0020 postures)
+# =============================================================================
+# Exactly ONE job — the daily partnerless-visitor GC sweep. Nothing else
+# owns a clock: scheduled publish is read-time-lazy (date_publish is
+# evaluated on every read — no cron flips it), routing/redirect reads are
+# fresh indexed queries, and the upstream snippet-asset cron died with
+# asset bundles (fenced).
+#
+# Sweep shape: hard DELETE (never archive — a soft-dead visitor row would
+# poison the digest upsert) of rows with portal_user_id IS NULL AND
+# last_connection_at older than the retention window (default 60 days,
+# WEBSITE_VISITOR_RETENTION_DAYS), in batches (default 1000,
+# WEBSITE_VISITOR_GC_BATCH) with commit-progress; tracks cascade. Safe to
+# run concurrently (batch claims lock-skip) and re-runnable; safety never
+# depends on the schedule firing (nothing gates on swept state).
+scheduled_jobs:
+
+  visitor-gc:
+    schedule: "23 3 * * *"            # the daily 03:23 sweep (off the :00 mark)
+    handler: "website::sweep_partnerless_visitors"
+    posture: pull                     # plain pull — no self-arming trigger
+    commit_policy: commit_per_batch   # each committed batch logs progress; the replay window is one batch
+    pickup_lock: true                 # concurrent batch claims lock-skip (FOR UPDATE SKIP LOCKED)

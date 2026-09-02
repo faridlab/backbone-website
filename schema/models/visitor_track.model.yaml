@@ -1,0 +1,53 @@
+# =============================================================================
+# website — the append-only page-view log: VisitorTrack.
+#
+# PORT DECISIONS (source: docs/odoo/website/website — docs/spec.md §1.8):
+#  - Append-only: rows are only ever INSERTed (by the heartbeat's riding
+#    CTE, deduped within 30 minutes per (visitor, url)) or re-parented by
+#    the login merge. No update path exists.
+#  - HARD-DELETE model: the visitor GC cascades rows; no soft-delete
+#    metadata is carried (the high-volume log grain — every column is
+#    load-bearing).
+# =============================================================================
+
+models:
+
+  - name: VisitorTrack
+    collection: visitor_tracks
+    read_only: true
+    description: "Visitor Track — one page-view row in the append-only visit log. Inserted by the heartbeat (30-minute per-(visitor, url) dedup), re-parented by the login merge, deleted only by the visitor GC cascade. No update path exists."
+    fields:
+      id:
+        type: uuid
+        attributes: ["@id", "@default(uuid)"]
+        description: "Unique record id"
+      visitor_id:
+        type: uuid
+        attributes: ["@required", "@indexed", "@foreign_key(Visitor.visitors)"]
+        description: "The visitor whose visit this is. Real same-schema FK with cascade — the GC and erasure deletes take the log with them."
+      page_id:
+        type: uuid?
+        attributes: ["@indexed", "@exclude_from_foreign_key_check"]
+        description: "LOGICAL ref Page.id — set when the tracked url resolved to a page (nullable: tracks may record non-page urls)."
+      url:
+        type: string
+        attributes: ["@required", "@max(500)"]
+        description: "The visited path."
+      visited_at:
+        type: datetime
+        attributes: ["@required", "@default(now)"]
+        description: "When the view happened."
+
+    relations:
+      visitor:
+        type: Visitor
+        attributes: ["@one", "@foreign_key(visitor_id)", "@on_delete(cascade)"]
+        description: "The owning visitor row (real FK website.visitor_tracks.visitor_id -> website.visitors, cascade)"
+
+    indexes:
+      - type: index
+        fields: [visitor_id, visited_at]
+        description: "The per-visitor timeline read"
+      - type: index
+        fields: [url]
+        description: "The per-url traffic read"
