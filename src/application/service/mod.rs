@@ -20,6 +20,7 @@ pub mod website_audit_log_service;
 pub mod website_member_service;
 
 // <<< CUSTOM
+pub mod captcha_recaptcha;
 pub mod intake_contact;
 pub mod intake_engine;
 pub mod lang_matcher;
@@ -32,6 +33,10 @@ pub mod visitor_gc;
 pub mod website_error;
 pub mod website_surface;
 
+pub use captcha_recaptcha::{
+    CaptchaProvider, CaptchaVerifier, RecaptchaClient, RecaptchaConfig,
+    WEBSITE_CAPTCHA_PROVIDER_ENV, WEBSITE_RECAPTCHA_SECRET_ENV, WEBSITE_RECAPTCHA_VERIFY_URL_ENV,
+};
 pub use intake_contact::{ContactIntake, ContactMessageView};
 pub use intake_engine::{
     IntakeEngine, IntakeOutcome, IntakeRatePolicy, TurnstileClient, TurnstileConfig,

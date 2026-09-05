@@ -9,8 +9,10 @@
 //! below runs the frozen order:
 //!
 //! 1. (website resolution happens in the route — hostname binding)
-//! 2. turnstile, FAIL-CLOSED, unset ≠ misconfigured ≠ refused ≠
-//!    unreachable — four typed answers, no passthrough on any path;
+//! 2. the captcha verifier (turnstile default, the recaptcha sibling
+//!    selectable via `WEBSITE_CAPTCHA_PROVIDER` — §6.3), FAIL-CLOSED,
+//!    unset ≠ misconfigured ≠ refused ≠ unreachable — four typed
+//!    answers, no passthrough on any path;
 //! 3. Tier B fixed-window rate buckets, per-identity AND per-IP, both
 //!    always armed (identity key = the visitor digest when a session
 //!    is presented, else the connecting IP);
@@ -129,7 +131,9 @@ fn savepoint_ident(name: &str) -> String {
     format!("intake_{folded}")
 }
 
-/// The turnstile verifier — the module's ONLY outbound HTTP call.
+/// The turnstile verifier — the module's ONLY outbound HTTP family
+/// (one call shape; the recaptcha sibling in `captcha_recaptcha.rs`
+/// shares it — §6.3).
 #[derive(Debug, Clone)]
 pub struct TurnstileClient {
     config: TurnstileConfig,
@@ -211,20 +215,40 @@ struct WindowCount {
 /// family trade: multi-instance hosts front a shared limiter).
 pub struct IntakeEngine {
     pool: PgPool,
-    turnstile: TurnstileClient,
+    captcha: super::captcha_recaptcha::CaptchaVerifier,
     pepper: String,
     notifier: std::sync::Arc<dyn IntakeNotifier>,
     books: Mutex<HashMap<String, WindowCount>>,
 }
 
 impl IntakeEngine {
+    /// Compose over the DEFAULT provider (turnstile) — the original
+    /// signature, kept for every existing composer; hosts selecting a
+    /// provider via env use [`Self::with_verifier`] +
+    /// [`super::captcha_recaptcha::CaptchaVerifier::from_env`].
     pub fn new(
         pool: PgPool,
         turnstile: TurnstileClient,
         pepper: String,
         notifier: std::sync::Arc<dyn IntakeNotifier>,
     ) -> Self {
-        Self { pool, turnstile, pepper, notifier, books: Mutex::new(HashMap::new()) }
+        Self::with_verifier(
+            pool,
+            super::captcha_recaptcha::CaptchaVerifier::Turnstile(turnstile),
+            pepper,
+            notifier,
+        )
+    }
+
+    /// Compose over the CONFIG-SELECTED verifier (§6.3): the turnstile
+    /// default, the recaptcha sibling, or the fail-closed unknown arm.
+    pub fn with_verifier(
+        pool: PgPool,
+        captcha: super::captcha_recaptcha::CaptchaVerifier,
+        pepper: String,
+        notifier: std::sync::Arc<dyn IntakeNotifier>,
+    ) -> Self {
+        Self { pool, captcha, pepper, notifier, books: Mutex::new(HashMap::new()) }
     }
 
     pub fn pool(&self) -> &PgPool {
@@ -303,10 +327,11 @@ impl IntakeEngine {
         payload: D::Payload,
         ctx: &IntakeContext<'_>,
     ) -> Result<IntakeReceipt, WebsiteError> {
-        // 2. Turnstile, fail-closed.
+        // 2. The captcha verifier (turnstile default, the recaptcha
+        // sibling selectable), fail-closed.
         if D::REQUIRES_TURNSTILE {
             let token = ctx.turnstile_token.unwrap_or("");
-            if let Err(e) = self.turnstile.verify(token).await {
+            if let Err(e) = self.captcha.verify(token).await {
                 record_audit(
                     &self.pool,
                     "intake_refused",

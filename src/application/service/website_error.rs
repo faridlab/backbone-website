@@ -119,6 +119,12 @@ pub enum WebsiteError {
     #[error("turnstile verifier is unreachable")]
     TurnstileUnreachable,
 
+    /// The captcha provider selector (`WEBSITE_CAPTCHA_PROVIDER`) names
+    /// no known provider — the gate stays shut rather than silently
+    /// falling back to a default provider (docs/spec.md §6.3).
+    #[error("the captcha provider selector names no known provider")]
+    CaptchaProviderUnknown,
+
     /// A Tier B intake rate bucket fired (per identity or per IP).
     #[error("intake rate limited; retry after {retry_after_seconds}s")]
     IntakeRateLimited { retry_after_seconds: i64 },
@@ -178,6 +184,7 @@ impl WebsiteError {
             WebsiteError::TurnstileNotConfigured => 503,
             WebsiteError::TurnstileMisconfigured => 503,
             WebsiteError::TurnstileUnreachable => 503,
+            WebsiteError::CaptchaProviderUnknown => 503,
             WebsiteError::IntakeRateLimited { .. } => 429,
             WebsiteError::IntakeFieldRejected => 422,
             WebsiteError::IntakeValidationFailed(_) => 422,
@@ -210,6 +217,7 @@ impl WebsiteError {
             WebsiteError::TurnstileNotConfigured => "website_turnstile_not_configured",
             WebsiteError::TurnstileMisconfigured => "website_turnstile_misconfigured",
             WebsiteError::TurnstileUnreachable => "website_turnstile_unreachable",
+            WebsiteError::CaptchaProviderUnknown => "website_captcha_provider_unknown",
             WebsiteError::IntakeRateLimited { .. } => "website_intake_rate_limited",
             WebsiteError::IntakeFieldRejected => "website_intake_field_rejected",
             WebsiteError::IntakeValidationFailed(_) => "website_intake_validation_failed",

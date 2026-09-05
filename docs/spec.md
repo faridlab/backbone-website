@@ -739,6 +739,57 @@ WARN at first use, the row lands with `notified = false`; the port never
 refuses the write and never mails the submitter. There is no mail-module
 dependency edge.
 
+### 6.3 The captcha provider arm (turnstile + the recaptcha sibling)
+
+The verifier family behind §6.2 step 2. `TurnstileClient` (Cloudflare) is
+the shipped default; `RecaptchaClient` (Google siteverify) is its SIBLING —
+the WE-R6 upstream default (`website_cf_turnstile` merely overrides it).
+Both are body-dialect variants of one contract: form-POST `secret` +
+`response`, parse the JSON answer, map onto the SAME four typed verdicts of
+§6.2. The `website_turnstile_*` code strings stay AS-IS (the §6.2 refusal
+vocabulary is frozen; the `turnstile` prefix is historical and now means
+"the captcha verifier").
+
+**Google answer mapping**: `success:true` → pass; `success:false` with
+`missing-input-secret` or `invalid-input-secret` → misconfigured (Google's
+secret-fault pair; Cloudflare's `bad-secret` has no Google counterpart);
+any other failure codes (`missing-input-response`,
+`invalid-input-response`, `timeout-or-duplicate`, unknown, or none) →
+refused; transport failure or unparseable body → unreachable (fail-closed).
+A v3 answer's `score`/`action`/`hostname` fields are IGNORED — no scoring
+is modeled here (BTF-14).
+
+**Selection is config, never per-declaration** (the decision): a deployment
+property — which anti-bot vendor this host bought — does not belong on the
+frozen `IntakeDeclaration` const trait. One knob, string-typed
+(§10.3's standing preference): `WEBSITE_CAPTCHA_PROVIDER` —
+unset/`turnstile` → the turnstile arm (existing deployments unchanged);
+`recaptcha` → the recaptcha arm; ANY other value → the unknown arm, which
+refuses every gated verb with the typed `503
+website_captcha_provider_unknown`. An unknown selector NEVER falls back to
+a default provider: a typo'd provider knob silently arming the other
+vendor would break the unset ≠ misconfigured discipline. The parse is a
+pure function (`CaptchaProvider::parse`), tolerant of case/whitespace, the
+`WEBSITE_TRUSTED_PROXY` parse pattern.
+
+**WM-19 deliberately not ported**: upstream's captcha seam fails OPEN on a
+missing secret (no secret → the gate is skipped). This module fails CLOSED
+— unset secret + a gated verb = the typed 503 of §6.2. The same holds for
+the recaptcha arm: unset ≠ misconfigured, both refuse, neither passes.
+
+**Secret/token hygiene**: no verdict's `Display` text, audit row
+(`{"verb","code"}` only), or wire body ever carries the configured secret
+or the presented token. The request header `x-turnstile-token` and the
+`IntakeContext::turnstile_token` field name are historical and
+provider-neutral in meaning (renaming them touches the webapp/engine
+contract; fenced to a dedicated renaming increment if ever).
+
+**Out of scope (fence)**: no widget/JS emitting, no per-form modeling, no
+score thresholds, no action/hostname matching, no multi-provider fan-out
+or fallback chain, no second engine, no events-module dependency (the
+events funnel consumes this substrate from the host; the sole-dep rule of
+§Identity is untouched).
+
 ---
 
 ## 7. The public read surface (the declared allowlist + negative probe)
@@ -1023,6 +1074,9 @@ the upstream snippet-asset cron dies with asset bundles (§13).
 | visitor digest pepper | string (secret) | none — REQUIRED at first visitor verb; unset → typed `website_visitor_pepper_not_configured` refusal, boot WARN | `WEBSITE_VISITOR_PEPPER` |
 | turnstile secret key | string (secret) | unset → turnstile-required verbs 503-not-configured (§6.2) | `WEBSITE_TURNSTILE_SECRET` |
 | turnstile siteverify URL | string | `https://challenges.cloudflare.com/turnstile/v0/siteverify` (probe override) | `WEBSITE_TURNSTILE_VERIFY_URL` |
+| recaptcha secret key | string (secret) | unset → gated verbs 503-not-configured when the recaptcha arm is selected (§6.3) | `WEBSITE_RECAPTCHA_SECRET` |
+| recaptcha siteverify URL | string | `https://www.google.com/recaptcha/api/siteverify` (probe override) | `WEBSITE_RECAPTCHA_VERIFY_URL` |
+| captcha provider | string | `turnstile` — `recaptcha` selects the Google arm; any other value → typed 503 `website_captcha_provider_unknown`, never a silent fallback (§6.3) | `WEBSITE_CAPTCHA_PROVIDER` |
 | visitor GC retention days | string-parsed u64 | `60` | `WEBSITE_VISITOR_RETENTION_DAYS` |
 | visitor GC batch size | string-parsed u64 | `1000` | `WEBSITE_VISITOR_GC_BATCH` |
 | trusted reverse proxy | bool-tolerant string | unset/false — the forwarded header is client-controlled and ignored entirely; `true`/`1`/`yes`/`on` resolve the client IP from the RIGHTMOST forwarded hop (§5.2, §6.2) | `WEBSITE_TRUSTED_PROXY` |
@@ -1220,6 +1274,7 @@ user_owned:
   - "src/application/service/visitor_service.rs"    # upsert/merge/GDPR erase
   - "src/application/service/visitor_gc.rs"         # the sweep
   - "src/application/service/intake_engine.rs"      # the executor + trait
+  - "src/application/service/captcha_recaptcha.rs"  # the provider arm (§6.3): recaptcha sibling + selection
   - "src/application/service/intake_contact.rs"     # the reference declaration
   - "src/application/service/principal_port.rs"     # fail-closed portal verifier port
   - "src/application/service/notifier_port.rs"      # fixed-recipient intake notifier port
@@ -1234,9 +1289,9 @@ user_owned:
 ```
 
 The generated `src/exports/services.rs` CUSTOM SERVICES block re-exports
-`specificity`, `slug`, `website_surface`, `intake_engine`, and
-`principal_port` items — inside its `<<< CUSTOM` markers (the marker
-mechanism preserves them across regen).
+`specificity`, `slug`, `website_surface`, `intake_engine`,
+`captcha_recaptcha`, and `principal_port` items — inside its `<<< CUSTOM`
+markers (the marker mechanism preserves them across regen).
 
 ---
 
@@ -1289,6 +1344,7 @@ Every row is FROZEN; reopening one requires a new register entry.
 | BTF-11 homepage bootstrap | `create_website` seeds the homepage page + menus; '/' resolution = homepage_url reroute → page serve → first reachable menu → 404 (declared chain in the page read) |
 | BTF-12 config field set | kept: name/domain/company/public_user/default_lang_code/homepage_url/robots_txt/social_links/contact_recipients/sequence. Dropped: analytics keys, search-console, maps key, plausible, CDN trio, custom code, tracker blocking, cookies_bar behavior, `language_ids` M2M, `specific_user_account` (BTF-6), `configurator_done`, `theme_id` |
 | BTF-13 company pairing | derived primary-website read (lowest sequence, live); NO stored column; delete guard while derived-primary (§1.13) |
+| BTF-14 captcha scoring | reCAPTCHA v3 `score`/`action`/`hostname` are NOT read — the verifier answers the boolean verdict only; threshold/action policy is never modeled here (a consumer composes its own over the exported client) |
 
 **Deferred increments (named gaps, not silently skipped):**
 
@@ -1335,6 +1391,12 @@ test, `WEBSITE_TEST_ADMIN_URL` override, missing-scratch = panic):
 11. `mount` — public router registers EXACTLY §7.2's routes; admin router's
     write verbs all sit under the module-write gate name `website`
     (route-table introspection, the no-write-routes probe pattern).
+12. `captcha` — the §6.3 provider arm: the four typed answers through the
+    recaptcha arm (unset secret / bad token / secret fault / unreachable /
+    pass), the selector parse rows (default turnstile, recaptcha, unknown →
+    typed 503 `website_captcha_provider_unknown` — never a silent
+    fallback), the router compose seam with the selected verifier, and the
+    secret/token never surfacing in any audit row or error text.
 
 Serial runs, exit codes recorded (`echo "GATE <name> EXIT=$?"`), never
 output-text judgement. `rls_app_role.sql` is exercised by the host compose

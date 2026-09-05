@@ -55,7 +55,9 @@ the crate to.
    merge (claim-in-place or reparent); GC hard-deletes partnerless
    rows past the retention horizon in batches.
 5. **Intake** — `IntakeDeclaration` in Rust, never a model-name route;
-   turnstile fail-closed with the four typed answers apart; per-identity
+   turnstile fail-closed with the four typed answers apart (the
+   config-selected recaptcha sibling answers the same four under the
+   same codes — §6.3); per-identity
    AND per-IP fixed windows with `Retry-After`; `SAVEPOINT
    intake_<name>` around every persist (a refusal leaves zero rows);
    no sudo; no anonymous mail — the notifier port is host-installed,
@@ -83,6 +85,13 @@ the crate to.
   typed 503s).
 - `WEBSITE_TURNSTILE_VERIFY_URL` — default the Cloudflare siteverify
   endpoint; probe-overridable.
+- `WEBSITE_RECAPTCHA_SECRET` / `WEBSITE_RECAPTCHA_VERIFY_URL` — the
+  Google reCAPTCHA sibling of the turnstile pair (§6.3): same fail-closed
+  four-verdict contract, unset ≠ misconfigured, probe-overridable default
+  `https://www.google.com/recaptcha/api/siteverify`.
+- `WEBSITE_CAPTCHA_PROVIDER` — `turnstile` (default) or `recaptcha`;
+  any other value → typed 503 `website_captcha_provider_unknown`,
+  never a silent fallback.
 - `WEBSITE_VISITOR_RETENTION_DAYS` (default 60),
   `WEBSITE_VISITOR_GC_BATCH` (default 1000).
 

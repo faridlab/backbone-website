@@ -15,6 +15,10 @@
 // (the exports-first discipline; downstream crates hold the module to
 // these names — mirroring portal's PortalDocumentSurface shape).
 
+pub use crate::application::service::captcha_recaptcha::{
+    CaptchaProvider, CaptchaVerifier, RecaptchaClient, RecaptchaConfig,
+    WEBSITE_CAPTCHA_PROVIDER_ENV, WEBSITE_RECAPTCHA_SECRET_ENV, WEBSITE_RECAPTCHA_VERIFY_URL_ENV,
+};
 pub use crate::application::service::intake_contact::{ContactIntake, ContactMessageView, ContactPayload};
 pub use crate::application::service::intake_engine::{
     IntakeContext, IntakeDeclaration, IntakeEngine, IntakeOutcome, IntakeRatePolicy,

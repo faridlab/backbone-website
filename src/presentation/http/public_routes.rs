@@ -31,6 +31,7 @@ use serde::Deserialize;
 use serde_json::json;
 
 use crate::application::service::{
+    captcha_recaptcha::CaptchaVerifier,
     intake_contact::{ContactIntake, ContactPayload},
     intake_engine::{
         IntakeContext, IntakeDeclaration, IntakeEngine, TurnstileClient, TurnstileConfig,
@@ -83,7 +84,12 @@ impl WebsitePublicState {
     /// is read from [`WEBSITE_TRUSTED_PROXY_ENV`]; hosts that need to
     /// control it in code use [`Self::compose_with_trusted_proxy`].
     pub fn compose(pool: sqlx::PgPool, pepper: String, turnstile: TurnstileConfig) -> Self {
-        Self::compose_with_trusted_proxy(pool, pepper, turnstile, trusted_proxy_from_env())
+        Self::compose_with_verifier(
+            pool,
+            pepper,
+            CaptchaVerifier::Turnstile(TurnstileClient::new(turnstile)),
+            trusted_proxy_from_env(),
+        )
     }
 
     /// [`Self::compose`] with the trusted-proxy posture explicit — the
@@ -93,6 +99,24 @@ impl WebsitePublicState {
         pool: sqlx::PgPool,
         pepper: String,
         turnstile: TurnstileConfig,
+        trusted_proxy: bool,
+    ) -> Self {
+        Self::compose_with_verifier(
+            pool,
+            pepper,
+            CaptchaVerifier::Turnstile(TurnstileClient::new(turnstile)),
+            trusted_proxy,
+        )
+    }
+
+    /// The provider-selection entry (§6.3): compose over the
+    /// CONFIG-SELECTED captcha verifier — the turnstile default, the
+    /// recaptcha sibling, or the fail-closed unknown arm (which refuses
+    /// every gated verb with `website_captcha_provider_unknown`).
+    pub fn compose_with_verifier(
+        pool: sqlx::PgPool,
+        pepper: String,
+        verifier: CaptchaVerifier,
         trusted_proxy: bool,
     ) -> Self {
         let notifier: Arc<dyn crate::application::service::notifier_port::IntakeNotifier> =
@@ -108,9 +132,9 @@ impl WebsitePublicState {
                     pepper.clone(),
                 ),
             ),
-            intake: Arc::new(IntakeEngine::new(
+            intake: Arc::new(IntakeEngine::with_verifier(
                 pool,
-                TurnstileClient::new(turnstile),
+                verifier,
                 pepper,
                 notifier,
             )),
@@ -119,17 +143,20 @@ impl WebsitePublicState {
         }
     }
 
-    /// [`Self::compose`] reading the pepper, turnstile, and
-    /// trusted-proxy knobs from the environment. An UNSET pepper stays
-    /// empty and the first visitor verb refuses with the typed
+    /// [`Self::compose`] reading the pepper, the captcha provider
+    /// knobs (`WEBSITE_CAPTCHA_PROVIDER` + the selected arm's secret
+    /// and verify URL), and the trusted-proxy knob from the
+    /// environment. An UNSET pepper stays empty and the first visitor
+    /// verb refuses with the typed
     /// `website_visitor_pepper_not_configured` — fail-closed, never a
-    /// zero-secret fallback.
+    /// zero-secret fallback. A host switching captcha providers changes
+    /// ONLY env vars — no code.
     pub fn from_env(pool: sqlx::PgPool) -> Self {
         let pepper = std::env::var(WEBSITE_PEPPER_ENV).unwrap_or_default();
-        Self::compose_with_trusted_proxy(
+        Self::compose_with_verifier(
             pool,
             pepper,
-            TurnstileConfig::from_env(),
+            CaptchaVerifier::from_env(),
             trusted_proxy_from_env(),
         )
     }

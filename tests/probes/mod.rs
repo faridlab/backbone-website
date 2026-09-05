@@ -2,6 +2,7 @@
 
 pub mod common;
 
+pub mod captcha_probes;
 pub mod client_ip_posture;
 pub mod intake_negatives;
 pub mod menus_redirects;

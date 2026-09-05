@@ -90,6 +90,11 @@ user_owned:
   # +per-IP windows -> per-verb savepoint -> plain-role persist.
   - "src/application/service/intake_engine.rs"
 
+  # The captcha provider arm (§6.3): the reCAPTCHA siteverify sibling of
+  # TurnstileClient + the config-selected CaptchaVerifier (selector knob
+  # with the fail-closed unknown arm — never a silent provider fallback).
+  - "src/application/service/captcha_recaptcha.rs"
+
   # The reference intake declaration (contact) targeting
   # website.contact_messages.
   - "src/application/service/intake_contact.rs"
