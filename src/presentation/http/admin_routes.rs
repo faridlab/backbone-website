@@ -33,6 +33,7 @@ use crate::application::service::{
     menu_service::{CreateMenuInput, MenuAdminService, MenuPatch},
     page_service::{CreatePageInput, PageAdminService, PagePatch, PUBLISH_FENCED_FIELDS},
     redirect_service::{CreateRedirectInput, RedirectAdminService, RedirectPatch},
+    tour_service::{TourService, UpsertTourInput},
     visitor_gc::{sweep_partnerless_visitors, DEFAULT_GC_BATCH, DEFAULT_RETENTION_DAYS},
     visitor_service::VisitorEngine,
     website_error::WebsiteError,
@@ -54,6 +55,7 @@ pub struct WebsiteAdminState {
     pub menus: Arc<MenuAdminService>,
     pub redirects: Arc<RedirectAdminService>,
     pub visitors: Arc<VisitorEngine>,
+    pub tours: Arc<TourService>,
     pub pool: sqlx::PgPool,
 }
 
@@ -65,6 +67,7 @@ impl WebsiteAdminState {
             menus: Arc::new(MenuAdminService::new(pool.clone())),
             redirects: Arc::new(RedirectAdminService::new(pool.clone())),
             visitors: Arc::new(VisitorEngine::new(pool.clone(), pepper)),
+            tours: Arc::new(TourService::new(pool.clone())),
             pool,
         }
     }
@@ -860,6 +863,117 @@ async fn sweep_visitors(
     }
 }
 
+// ── tour persistence (the web_tour port, officer half) ─────────────────────
+
+#[derive(Debug, Deserialize)]
+struct TourUpsertBody {
+    name: String,
+    #[serde(default)]
+    display_name: String,
+    #[serde(default)]
+    rainbow_man_message: Option<String>,
+    #[serde(default = "default_tour_steps")]
+    steps: serde_json::Value,
+}
+
+fn default_tour_steps() -> serde_json::Value {
+    serde_json::json!([])
+}
+
+async fn list_tours(State(state): State<WebsiteAdminState>) -> Response {
+    match state.tours.list_tours().await {
+        Ok(tours) => (
+            axum::http::StatusCode::OK,
+            Json(json!({ "tours": tours })),
+        )
+            .into_response(),
+        Err(e) => err_response(e),
+    }
+}
+
+async fn upsert_tour(
+    State(state): State<WebsiteAdminState>,
+    extensions: Extensions,
+    Json(body): Json<TourUpsertBody>,
+) -> Response {
+    let actor = actor_of(&extensions);
+    let input = UpsertTourInput {
+        name: body.name,
+        display_name: body.display_name,
+        rainbow_man_message: body.rainbow_man_message,
+        steps: body.steps,
+    };
+    match state.tours.upsert_tour(actor, input).await {
+        Ok(tour) => (axum::http::StatusCode::OK, Json(tour)).into_response(),
+        Err(e) => err_response(e),
+    }
+}
+
+async fn get_tour(
+    State(state): State<WebsiteAdminState>,
+    Path(name): Path<String>,
+) -> Response {
+    match state.tours.tour_by_name(&name).await {
+        Ok(Some(tour)) => (axum::http::StatusCode::OK, Json(tour)).into_response(),
+        Ok(None) => err_response(WebsiteError::TourNotFound),
+        Err(e) => err_response(e),
+    }
+}
+
+async fn delete_tour(
+    State(state): State<WebsiteAdminState>,
+    extensions: Extensions,
+    Path(name): Path<String>,
+) -> Response {
+    let actor = actor_of(&extensions);
+    match state.tours.delete_tour(actor, &name).await {
+        Ok(()) => (
+            axum::http::StatusCode::OK,
+            Json(json!({ "deleted": name })),
+        )
+            .into_response(),
+        Err(e) => err_response(e),
+    }
+}
+
+async fn reset_tour(
+    State(state): State<WebsiteAdminState>,
+    extensions: Extensions,
+    Path(name): Path<String>,
+) -> Response {
+    let actor = actor_of(&extensions);
+    match state.tours.reset_tour(actor, &name).await {
+        Ok(dropped) => (
+            axum::http::StatusCode::OK,
+            Json(json!({ "reset": name, "dropped_consumptions": dropped })),
+        )
+            .into_response(),
+        Err(e) => err_response(e),
+    }
+}
+
+// ── menu hierarchy read (the web_hierarchy port) ────────────────────────────
+
+#[derive(Debug, Deserialize)]
+struct MenuHierarchyQuery {
+    website_id: Uuid,
+    #[serde(default)]
+    parent: Option<Uuid>,
+    #[serde(default)]
+    limit: Option<i64>,
+}
+
+async fn menu_hierarchy(
+    State(state): State<WebsiteAdminState>,
+    Query(q): Query<MenuHierarchyQuery>,
+) -> Response {
+    let limit = q.limit.unwrap_or(200);
+    match state.menus.hierarchy_read(q.website_id, q.parent, limit).await {
+        Ok(slice) => (axum::http::StatusCode::OK, Json(slice)).into_response(),
+        Err(e) => err_response(e),
+    }
+}
+
 // ── intake read handler ─────────────────────────────────────────────────────
 
 async fn list_contact_messages(
@@ -916,8 +1030,14 @@ pub fn website_admin_routes(state: WebsiteAdminState) -> Router {
         .route("/admin/blocks/page/:page_id", get(page_blocks))
         // menus
         .route("/admin/menus", get(list_menus).post(create_menu))
+        .route("/admin/menus/hierarchy", get(menu_hierarchy))
         .route("/admin/menus/:id", axum::routing::patch(patch_menu).delete(delete_menu))
         .route("/admin/menus/:id/fanout", axum::routing::post(fanout_menu))
+        // tours (the web_tour port, officer half; the engine-facing
+        // principal tree lives in tour_routes)
+        .route("/admin/tours", get(list_tours).put(upsert_tour))
+        .route("/admin/tours/:name", get(get_tour).delete(delete_tour))
+        .route("/admin/tours/:name/reset", axum::routing::post(reset_tour))
         // redirects
         .route("/admin/redirects", get(list_redirects).post(create_redirect))
         .route("/admin/redirects/:id", axum::routing::patch(patch_redirect).delete(delete_redirect))

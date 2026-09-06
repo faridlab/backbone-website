@@ -76,6 +76,21 @@ the crate to.
    redirect-table reroute, canonical-301, terminal); redirects
    validate `alias_308` parameter-name parity; one answer per path
    per website.
+8. **Tour persistence** (spec §15.1) — tour definitions are unique by
+   name among LIVE rows (partial unique; a soft-deleted name recreates
+   as a new row); consumption is an idempotent per-principal set
+   membership (`(tour_id, portal_user_id)` unique, logical portal ref,
+   no cross-schema FK); the principal tree (`/tours/**`) is
+   fail-closed on the same verifier port as contract 6 (unwired or
+   missing header = typed 401 `website_tour_principal_required`;
+   unknown name = typed 404 `website_tour_not_found`); consumption is
+   never audited (the table is its trail) while upsert/delete/reset
+   are (`tour_upserted`/`tour_deleted`/`tour_reset`).
+9. **Menu hierarchy read** (spec §15.2) — `hierarchy_read(website_id,
+   parent, limit)`: deterministic `(sequence, id)` ordering, correlated
+   child counts, limit clamped 1..=500 with REPORTED truncation, and a
+   parent from another website reads the closed 404 (no cross-website
+   oracle).
 
 ## Config knobs (all string-typed; the host declares them)
 

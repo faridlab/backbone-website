@@ -4,8 +4,10 @@ pub mod common;
 
 pub mod captcha_probes;
 pub mod client_ip_posture;
+pub mod hierarchy_probes;
 pub mod intake_negatives;
 pub mod menus_redirects;
+pub mod tour_probes;
 pub mod one_resolver_invariant;
 pub mod public_surface;
 pub mod publish_fence;

@@ -1,6 +1,6 @@
 [package]
 name = "backbone-website"
-version = "0.1.0"
+version = "0.3.0"
 edition = "2021"
 description = "Headless website engine — per-website pages/menus with ONE generic-vs-specific resolver backed by real COALESCE-sentinel unique constraints, explicit copy-on-write/copy-on-unlink versioning verbs with provenance, the stored+derived+fenced publish contract, GDPR-shaped visitors (keyed digest, random tokens, no raw IP), turnstile-gated declared intake verbs, the SEO redirect table + table-driven routing matcher, and a declared public read allowlist with negative-enumeration posture (Odoo website port; rendering stays in the webapps)"
 

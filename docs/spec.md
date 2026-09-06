@@ -323,6 +323,35 @@ Table-level (generator-emitted) constraints in the model YAML:
 `visitors` UNIQUE `(access_token)`, UNIQUE `(digest, website_id)`;
 `website_members` UNIQUE `(portal_user_id, website_id)`.
 
+### 1.15 `website.tours` + `website.tour_consumptions` — tour persistence (the web_tour port)
+
+Two user-owned tables in `…_tour_persistence.up.sql`:
+
+- **`website.tours`** — the tour definitions the CLIENT engine consumes
+  BY NAME (`name` 1..=120 chars, `display_name` ≤ 120,
+  `rainbow_man_message` ≤ 500 nullable, `steps` JSONB ≤ 256 KiB — a
+  bound, not a parser: the steps are the client engine's own vocabulary,
+  opaque here). NOT website-scoped (the same posture as
+  `website_audit_log`): a tour is a UI onboarding concern keyed by its
+  name, not per-site content. Uniqueness is a partial live-row index
+  `idx_website_tours_name_live ON (name) WHERE deleted_at IS NULL` — a
+  soft-deleted name recreates as a NEW row, and upsert lands through
+  `ON CONFLICT (name) WHERE (metadata->>'deleted_at') IS NULL DO UPDATE`
+  (which infers exactly that index).
+- **`website.tour_consumptions`** — the per-principal consumption M2M:
+  `(tour_id, portal_user_id)` UNIQUE (consumption is set membership, the
+  verb idempotent), FK `tour_id → website.tours(id) ON DELETE CASCADE`,
+  logical `portal_user_id` (NO cross-schema FK — the module-family
+  contract), `consumed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`.
+  Append-only: no soft-delete arm exists because a deleted consumption
+  is meaningless — reset is the officer verb that clears rows.
+
+Three audit-enum values ride along (`tour_upserted`, `tour_deleted`,
+`tour_reset` — the officer verbs) plus the per-table metadata-timestamp
+triggers. Consumption itself is deliberately NOT audited: it is an
+idempotent per-principal fact and the table IS its trail (the same
+ruling as visitor heartbeats).
+
 ---
 
 ## 2. The ONE specificity resolver (WS-1)
@@ -915,6 +944,12 @@ nests both (merge then nest once, or two nests on disjoint subtrees):
   company_auth outside). Authority names resolve through the host gate:
   `write:website` (POST/PUT/PATCH), `delete:website` (DELETE),
   `admin:website` / `ADMIN` / `*:*` supersets.
+- **Tour principal tree** — `tour_routes(TourPrincipalState) -> Router`
+  (§15): the web-tour engine-facing routes under `/tours/**`. Every route
+  requires a VERIFIED portal principal through the §9.3 port (unwired →
+  the typed 401); the host nests it wherever its authenticated client
+  surface lives — it is deliberately NOT part of the §7.2 public
+  allowlist (nothing here answers unauthenticated).
 
 ### 9.2 Admin route table (exhaustive)
 
@@ -941,9 +976,19 @@ POST   /admin/pages/:id/rename             (write) — §8.3
 DELETE /admin/pages/:id                    (delete) — specifics only (§4.2)
 GET    /admin/menus?website_id=            tree
 POST   /admin/menus                        create (write) — website_id required
+GET    /admin/menus/hierarchy?website_id=&parent=&limit=
+                                            the web_hierarchy read port (§15.2) —
+                                            deterministic (sequence, id) child
+                                            ordering, correlated child counts,
+                                            reported truncation, limit 1..=500
 POST   /admin/menus/:id/fanout             explicit per-website fan-out copy (write)
 PATCH  /admin/menus/:id                    (write) — depth/mega validation service-side
 DELETE /admin/menus/:id                    (delete) — local only (§4.4)
+GET    /admin/tours                        live tour definitions (read)
+PUT    /admin/tours                        upsert by name (write) — §15.1
+GET    /admin/tours/:name                  one live definition (read)
+DELETE /admin/tours/:name                  soft delete (delete) — frees the name
+POST   /admin/tours/:name/reset            drop every consumption row (write) — audited
 GET    /admin/redirects?website_id=
 POST   /admin/redirects                    (write) — 308 param-parity validated
 PATCH  /admin/redirects/:id                (write)
@@ -1058,6 +1103,8 @@ uses it only through the visibility tiers.
 20260902000013_add_audit_triggers.up.sql                — metadata timestamp triggers
                                                           (up-only, the family shape)
 20260902000020_website_hardening_constraints.{up,down}.sql — §1.14 (user-owned)
+20260906000001_tour_persistence.{up,down}.sql        — §1.15 tours + tour_consumptions
+                                                          (user-owned; the web_tour port)
 ```
 
 ### 10.2 Crons
@@ -1094,7 +1141,7 @@ standing preference.
 ```toml
 [package]
 name = "backbone-website"
-version = "0.1.0"
+version = "0.3.0"
 edition = "2021"
 
 [dependencies]
@@ -1279,9 +1326,12 @@ user_owned:
   - "src/application/service/principal_port.rs"     # fail-closed portal verifier port
   - "src/application/service/notifier_port.rs"      # fixed-recipient intake notifier port
   - "src/application/service/website_surface.rs"    # the exported trait contract
+  - "src/application/service/tour_service.rs"       # tour persistence, the web_tour port (§15.1)
   - "src/presentation/http/public_routes.rs"        # the declared public allowlist tree
   - "src/presentation/http/admin_routes.rs"         # the officer tree (host gates it)
+  - "src/presentation/http/tour_routes.rs"          # the tour principal tree (§15.1)
   - "migrations/*hardening*"                        # the sentinel partial uniques
+  - "migrations/*tour_persistence*"                 # tours + tour_consumptions DDL (§1.15)
   - "README.md"
   - "SPEC.md"
   - "docs/**"                                       # this spec + fence records
@@ -1397,7 +1447,74 @@ test, `WEBSITE_TEST_ADMIN_URL` override, missing-scratch = panic):
     typed 503 `website_captcha_provider_unknown` — never a silent
     fallback), the router compose seam with the selected verifier, and the
     secret/token never surfacing in any audit row or error text.
+13. `tours` (§15.1) — upsert-by-name updates never duplicates (id stable);
+    a soft-deleted name recreates as a NEW row; consume is idempotent per
+    principal and independent across principals; unknown tour = typed
+    `website_tour_not_found`; reset drops every principal's rows; the
+    principal tree is fail-closed (unwired verifier or missing header =
+    typed 401 `website_tour_principal_required`; a verified bearer = the
+    outcome arm; `/tours/consumed` keeps static-over-param priority over
+    `/tours/:name`).
+14. `hierarchy` (§15.2) — the slice shape (anchor + children + truncation
+    flag), deterministic (sequence, id) ordering, correlated child counts,
+    REPORTED limit truncation, the typed limit bounds (0 and 501 refuse),
+    and the closed cross-website parent 404 (no oracle).
 
 Serial runs, exit codes recorded (`echo "GATE <name> EXIT=$?"`), never
 output-text judgement. `rls_app_role.sql` is exercised by the host compose
 probes, not the module suite.
+
+---
+
+## 15. The web bases that DID port (web_tour + web_hierarchy)
+
+Scope ruling (pillar 08, WB-9 rows WB-2/WB-3): the upstream Odoo
+`web_tour` JS engine and `web_hierarchy` widget are webapp territory —
+NO engine is ported, here or anywhere. What ports is exactly two pieces
+of server-side substrate, both landing in THIS module (there is no
+web-bases Rust module upstream to mirror, the host must not own
+business logic, and this module already owns the
+logical-portal-principal convention the consumption grain needs):
+
+### 15.1 Tour persistence (`tour_service.rs` + `tour_routes.rs`)
+
+- **The service verbs** — `upsert_tour` (create-or-update by name; the
+  engine's consumption key never moves), `tour_by_name` / `list_tours`
+  (live rows only), `delete_tour` (soft delete, frees the name),
+  `consume_tour` (idempotent; answers `Consumed { consumed_at }` or
+  `AlreadyConsumed { consumed_at }` — both successes, `consumed_at`
+  reports the ORIGINAL fact), `consumed_for(principal)` (the caller's
+  consumed set, ordered by name), `reset_tour` (officer verb, drops
+  every principal's rows for the name, audited with the dropped count).
+- **The principal tree** — `tour_routes(TourPrincipalState)`: `GET
+  /tours`, `GET /tours/:name`, `GET /tours/consumed` (static-over-param
+  priority asserted), `POST /tours/:name/consume`. Every route requires
+  a VERIFIED portal principal through the §9.3 port; anything less is
+  the typed 401 `website_tour_principal_required`. Unknown tour name =
+  the typed 404 `website_tour_not_found`. The tree does NOT self-mount
+  and is NOT on the §7.2 public allowlist.
+- **Typed errors** — `WebsiteError::TourNotFound` (404) and
+  `TourPrincipalRequired` (401), in the shared enum with their stable
+  codes.
+- **Host compose** — mount `tour_routes` where the authenticated client
+  surface lives, with the SAME principal-verifier adapter the public
+  tree's connected tiers use; the officer verbs ride the admin tree
+  (§9.2) with no extra wiring.
+
+### 15.2 The menu hierarchy read (`MenuAdminService::hierarchy_read`)
+
+The single upstream `hierarchy_read()` method, as one admin read port:
+
+- `hierarchy_read(website_id, parent: Option<Uuid>, limit: i64)` —
+  parent `None` anchors the ROOTS slice; a given parent anchors its
+  children slice. Children order by `(sequence, id)` — the family's
+  deterministic ordering — and every node carries a correlated
+  `child_count`. `limit` is clamped to 1..=500 (typed
+  `website_invalid_input` outside) and truncation is REPORTED
+  (`truncated: true`), never silent.
+- Tenancy: the anchor must live on the requested website — a parent
+  from another website is the closed 404 "parent menu not found on this
+  website", never a cross-website oracle.
+- Mounted at `GET /admin/menus/hierarchy?website_id=&parent=&limit=`
+  (default limit 200; static route beats `/admin/menus/:id`).
+

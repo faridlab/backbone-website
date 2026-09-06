@@ -126,10 +126,29 @@ user_owned:
   # the module-write gate keyed "website" as the innermost route layer.
   - "src/presentation/http/admin_routes.rs"
 
+  # Tour persistence (the web_tour port): definitions keyed by name
+  # (unique among live rows, soft-deleted names recreatable), the
+  # per-principal consumption M2M with the idempotent consume verb,
+  # consumed-set read, and the audited officer verbs (upsert/delete/
+  # reset). Consumption itself is deliberately NOT audited — the table
+  # IS its trail.
+  - "src/application/service/tour_service.rs"
+
+  # The tour principal tree (the engine-facing half of the web_tour
+  # port): definitions/consumed-set reads and the consume verb, every
+  # route behind the fail-closed WebsitePrincipalVerifier port.
+  - "src/presentation/http/tour_routes.rs"
+
   # Hand-written DDL hardening: the COALESCE-sentinel partial unique
   # indexes (specificity, url scope, live domain, public principal,
   # redirect url_from) — the DB fences the resolver's single-row claims.
   - "migrations/*hardening*"
+
+  # Hand-written DDL for tour persistence (the web_tour port): the
+  # tours + tour_consumptions tables, the live-name partial unique
+  # index, the per-pair consumption unique index, the tour audit enum
+  # values + per-table audit triggers.
+  - "migrations/*tour_persistence*"
 
   # Hand-authored module documentation (root docs + the frozen build
   # contract).

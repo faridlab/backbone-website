@@ -79,6 +79,18 @@ pub enum WebsiteError {
     #[error("a mega-menu cannot carry a parent or children")]
     MegaMenuIsolated,
 
+    // ── tour persistence (the web_tour port) ───────────────────────────────
+
+    /// The named tour does not exist among live definitions (the
+    /// engine consumes by name; a miss is the closed 404).
+    #[error("no live tour carries this name")]
+    TourNotFound,
+
+    /// A consumption verb arrived without a verified portal principal
+    /// — consumption is a per-principal fact, never anonymous.
+    #[error("tour consumption requires a verified portal principal")]
+    TourPrincipalRequired,
+
     // ── redirects (WS-12) ──────────────────────────────────────────────────
 
     /// An `alias_308` redirect's target does not carry the same
@@ -177,6 +189,8 @@ impl WebsiteError {
             WebsiteError::PageVisibilityRefused => 403,
             WebsiteError::MenuDepthExceeded => 422,
             WebsiteError::MegaMenuIsolated => 422,
+            WebsiteError::TourNotFound => 404,
+            WebsiteError::TourPrincipalRequired => 401,
             WebsiteError::RedirectParamParity => 422,
             WebsiteError::RedirectTargetRequired => 422,
             WebsiteError::VisitorPepperNotConfigured => 500,
@@ -210,6 +224,8 @@ impl WebsiteError {
             WebsiteError::PageVisibilityRefused => "website_page_visibility_refused",
             WebsiteError::MenuDepthExceeded => "website_menu_depth_exceeded",
             WebsiteError::MegaMenuIsolated => "website_mega_menu_isolated",
+            WebsiteError::TourNotFound => "website_tour_not_found",
+            WebsiteError::TourPrincipalRequired => "website_tour_principal_required",
             WebsiteError::RedirectParamParity => "website_redirect_param_parity",
             WebsiteError::RedirectTargetRequired => "website_redirect_target_required",
             WebsiteError::VisitorPepperNotConfigured => "website_visitor_pepper_not_configured",

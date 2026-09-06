@@ -28,6 +28,7 @@ pub mod notifier_port;
 pub mod principal_port;
 pub mod slug;
 pub mod specificity;
+pub mod tour_service;
 pub mod versioning_service;
 pub mod visitor_gc;
 pub mod website_error;
@@ -46,6 +47,7 @@ pub use lang_matcher::{
 };
 pub use principal_port::{RefusingPrincipalVerifier, WebsitePrincipal, WebsitePrincipalVerifier};
 pub use slug::{slug_from, SlugId};
+pub use tour_service::{ConsumeOutcome, ConsumedTour, TourService, TourView, UpsertTourInput};
 pub use specificity::{
     live_scope, prefer_specific, page_entity_by_id, resolve_page_by_url, resolve_sitemap_page,
     resolve_specific, Resolution, ResolvedPage, ScopeFragment,

@@ -31,6 +31,35 @@ use super::website_service::{record_audit, ActorRef};
 /// The depth ceiling: at most two levels below the root node.
 pub const MENU_MAX_DEPTH: i32 = 2;
 
+/// One node of a hierarchy slice — the flat read shape the
+/// `web_hierarchy` port serves (the same fields as [`MenuNode`] plus
+/// the lazy-expansion child count, WITHOUT recursive nesting: the
+/// view expands level by level through the slice verb).
+#[derive(Debug, Clone, serde::Serialize, sqlx::FromRow)]
+pub struct HierarchyNode {
+    pub id: Uuid,
+    pub parent_id: Option<Uuid>,
+    pub name: String,
+    pub page_id: Option<Uuid>,
+    pub url: Option<String>,
+    pub new_window: bool,
+    pub sequence: i32,
+    pub visibility: String,
+    pub required_member_roles: Vec<String>,
+    pub is_mega_menu: bool,
+    pub child_count: i64,
+}
+
+/// A hierarchy slice: the anchor row (None = the roots slice), its
+/// ordered child level, and the truncation flag.
+#[derive(Debug, serde::Serialize)]
+pub struct HierarchySlice {
+    pub website_id: Uuid,
+    pub parent: Option<HierarchyNode>,
+    pub children: Vec<HierarchyNode>,
+    pub truncated: bool,
+}
+
 /// The menu tree node the reads serve.
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct MenuNode {
@@ -524,6 +553,91 @@ impl MenuAdminService {
             })
             .collect();
         Ok(build_tree(fully))
+    }
+
+    /// The hierarchy slice read — the `web_hierarchy` port (one RPC
+    /// returning a parent/child slice by spec, for lazily-expanding
+    /// tree views). `parent = None` reads the ROOT slice. Ordering is
+    /// deterministic everywhere: `(sequence, id)` within every level.
+    /// The `limit` bound (1..=500) is part of the typed surface — a
+    /// huge slice is a truncated answer plus the flag, never an
+    /// unbounded read.
+    pub async fn hierarchy_read(
+        &self,
+        website_id: Uuid,
+        parent: Option<Uuid>,
+        limit: i64,
+    ) -> Result<HierarchySlice, WebsiteError> {
+        const LIMIT_MAX: i64 = 500;
+        if !(1..=LIMIT_MAX).contains(&limit) {
+            return Err(WebsiteError::InvalidInput(format!(
+                "hierarchy limit must lie between 1 and {LIMIT_MAX}"
+            )));
+        }
+        // The anchor row (a parent outside this website is the closed
+        // 404 — no cross-website oracle).
+        let anchor = if let Some(parent_id) = parent {
+            let row = sqlx::query_as::<_, HierarchyNode>(
+                r#"
+                SELECT m.id, m.parent_id, m.name, m.page_id, m.url, m.new_window,
+                       m.sequence, m.visibility::text AS visibility,
+                       m.required_member_roles, m.is_mega_menu,
+                       (SELECT count(*) FROM website.menus gc
+                        WHERE gc.parent_id = m.id
+                          AND (gc.metadata->>'deleted_at') IS NULL) AS child_count
+                FROM website.menus m
+                WHERE m.id = $1 AND m.website_id = $2
+                  AND (m.metadata->>'deleted_at') IS NULL
+                "#,
+            )
+            .bind(parent_id)
+            .bind(website_id)
+            .fetch_optional(&self.pool)
+            .await?;
+            match row {
+                Some(a) => Some(a),
+                None => {
+                    return Err(WebsiteError::NotFound(
+                        "parent menu not found on this website".to_string(),
+                    ))
+                }
+            }
+        } else {
+            None
+        };
+        // One level below the anchor (or the roots), limit+1 fetched so
+        // truncation is observable without a second count query.
+        let mut rows = sqlx::query_as::<_, HierarchyNode>(
+            r#"
+            SELECT m.id, m.parent_id, m.name, m.page_id, m.url, m.new_window,
+                   m.sequence, m.visibility::text AS visibility,
+                   m.required_member_roles, m.is_mega_menu,
+                   (SELECT count(*) FROM website.menus gc
+                    WHERE gc.parent_id = m.id
+                      AND (gc.metadata->>'deleted_at') IS NULL) AS child_count
+            FROM website.menus m
+            WHERE m.website_id = $1
+              AND m.parent_id IS NOT DISTINCT FROM $2
+              AND (m.metadata->>'deleted_at') IS NULL
+            ORDER BY m.sequence, m.id
+            LIMIT $3
+            "#,
+        )
+        .bind(website_id)
+        .bind(parent)
+        .bind(limit + 1)
+        .fetch_all(&self.pool)
+        .await?;
+        let truncated = rows.len() as i64 > limit;
+        if truncated {
+            rows.truncate(limit as usize);
+        }
+        Ok(HierarchySlice {
+            website_id,
+            parent: anchor,
+            children: rows,
+            truncated,
+        })
     }
 
     /// A mega-menu's ordered blocks.
