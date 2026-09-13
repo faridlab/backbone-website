@@ -20,16 +20,15 @@ version: 2
 schema: website
 description: "website — the headless website engine: per-website pages/menus with a single generic-vs-specific resolver backed by real unique(key, website_id) constraints, explicit copy-on-write/copy-on-unlink versioning verbs with provenance, the stored+derived+fenced publish contract, GDPR-shaped visitors (keyed digest, random tokens, no raw IP), turnstile-gated declared intake verbs, the SEO redirect table + table-driven language matcher (single-default-language activation), and a declared public read allowlist with a negative-enumeration posture (Odoo website port, headless)"
 
-# ADR-0014 company fence: the upstream Odoo website addon ships ZERO
-# company ir.rules — multi-website scoping is code (website_domain folded
-# into every read). The port declares that posture honestly as `none`: no
-# company-gating column, no RLS policy. Visibility is service-layer policy
-# in every read verb (the declared public read allowlist + tier checks);
-# tenant isolation remains the only DB fence. The company allow-list
+# Company fence: none by design — the upstream Odoo website addon ships ZERO
+# company ir.rules and multi-website scoping is code (website_domain folded
+# into every read): no company-gating column, no RLS policy (ADR-0014
+# posture 4; tenant-agnostic under ADR-0029). Visibility is service-layer
+# policy in every read verb (the declared public read allowlist + tier
+# checks); tenant isolation remains the only DB fence. The company allow-list
 # DERIVATION (public principal -> [website.company_id]; member -> same;
 # otherwise -> []) is exported for family-side read models — derived,
 # never stored.
-company_fence: none
 
 config:
   database: postgresql

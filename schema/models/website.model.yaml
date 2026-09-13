@@ -38,7 +38,7 @@ models:
       company_id:
         type: uuid
         attributes: ["@required", "@indexed", "@exclude_from_foreign_key_check", "@global"]
-        description: "LOGICAL ref organization.Company.id (the family rule: cross-schema references are indexed uuids with no DB constraint — the company table lives in the organization module). Marked @global and NOT a fence: reads are gated by the declared verb surface, never by this column (ADR-0014 posture 4 — the module declares company_fence: none)."
+        description: "LOGICAL ref organization.Company.id (the family rule: cross-schema references are indexed uuids with no DB constraint — the company table lives in the organization module). Marked @global and NOT a fence: reads are gated by the declared verb surface, never by this column (ADR-0014 posture 4 — the module ships no company fence)."
       public_user_id:
         type: uuid
         attributes: ["@required", "@indexed", "@exclude_from_foreign_key_check"]
