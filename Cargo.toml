@@ -1,6 +1,6 @@
 [package]
 name = "backbone-website"
-version = "0.3.12"
+version = "0.3.13"
 edition = "2021"
 description = "Headless website engine — per-website pages/menus with ONE generic-vs-specific resolver backed by real COALESCE-sentinel unique constraints, explicit copy-on-write/copy-on-unlink versioning verbs with provenance, the stored+derived+fenced publish contract, GDPR-shaped visitors (keyed digest, random tokens, no raw IP), turnstile-gated declared intake verbs, the SEO redirect table + table-driven routing matcher, and a declared public read allowlist with negative-enumeration posture (Odoo website port; rendering stays in the webapps)"
 
@@ -35,8 +35,8 @@ backbone-messaging = { git = "https://github.com/faridlab/backbone-framework", t
 # website_members.portal_user_id all key on the portal-user ROW —
 # portal.portal_users(id), logical refs). Pinned tag-equal like every
 # sibling dep.
-backbone-auditlog = { git = "https://github.com/faridlab/backbone-auditlog", tag = "v0.1.10" }
-backbone-portal = { git = "https://github.com/faridlab/backbone-portal", tag = "v0.2.11" }
+backbone-auditlog = { git = "https://github.com/faridlab/backbone-auditlog", tag = "v0.1.11" }
+backbone-portal = { git = "https://github.com/faridlab/backbone-portal", tag = "v0.2.12" }
 
 # Sibling modules NOT consumed by design — recorded here so no later seat
 # adds them casually:
