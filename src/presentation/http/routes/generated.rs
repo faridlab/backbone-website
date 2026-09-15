@@ -18,7 +18,6 @@ use super::{
     visitor_handler::create_visitor_read_routes,
     visitor_track_handler::create_visitor_track_read_routes,
     website_handler::create_website_read_routes,
-    website_audit_log_handler::create_website_audit_log_read_routes,
     website_member_handler::create_website_member_read_routes,
 };
 
@@ -32,7 +31,6 @@ use crate::application::service::{
     VisitorService,
     VisitorTrackService,
     WebsiteService,
-    WebsiteAuditLogService,
     WebsiteMemberService,
 };
 
@@ -47,7 +45,6 @@ pub struct HttpServices {
     pub visitor: Arc<VisitorService>,
     pub visitor_track: Arc<VisitorTrackService>,
     pub website: Arc<WebsiteService>,
-    pub website_audit_log: Arc<WebsiteAuditLogService>,
     pub website_member: Arc<WebsiteMemberService>,
 }
 
@@ -86,8 +83,6 @@ pub fn configure_routes(services: HttpServices) -> Router {
         .merge(create_visitor_track_read_routes(services.visitor_track))
         // Website routes (READ-ONLY — append-only/event-sourced entity; writes arrive via the event handlers)
         .merge(create_website_read_routes(services.website))
-        // WebsiteAuditLog routes (READ-ONLY — append-only/event-sourced entity; writes arrive via the event handlers)
-        .merge(create_website_audit_log_read_routes(services.website_audit_log))
         // WebsiteMember routes (READ-ONLY — append-only/event-sourced entity; writes arrive via the event handlers)
         .merge(create_website_member_read_routes(services.website_member))
 }
@@ -130,10 +125,6 @@ pub mod individual {
 
     pub fn website_routes(service: Arc<WebsiteService>) -> Router {
         create_website_routes(service)
-    }
-
-    pub fn website_audit_log_routes(service: Arc<WebsiteAuditLogService>) -> Router {
-        create_website_audit_log_routes(service)
     }
 
     pub fn website_member_routes(service: Arc<WebsiteMemberService>) -> Router {

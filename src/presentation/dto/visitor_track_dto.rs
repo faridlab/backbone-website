@@ -264,4 +264,3 @@ impl backbone_core::ApplyUpdateDto<UpdateVisitorTrackDto> for VisitorTrack {
 // Add custom DTOs specific to VisitorTrack here.
 // This section will be preserved during regeneration.
 // >>> END CUSTOM DTOs
-

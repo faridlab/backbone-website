@@ -16,7 +16,6 @@ pub mod redirect_service;
 pub mod visitor_service;
 pub mod visitor_track_service;
 pub mod website_service;
-pub mod website_audit_log_service;
 pub mod website_member_service;
 
 // <<< CUSTOM
@@ -67,7 +66,6 @@ pub use redirect_service::RedirectService;
 pub use visitor_service::VisitorService;
 pub use visitor_track_service::VisitorTrackService;
 pub use website_service::WebsiteService;
-pub use website_audit_log_service::WebsiteAuditLogService;
 pub use website_member_service::WebsiteMemberService;
 // <<< CUSTOM
 pub use notifier_port::{IntakeNotifier, UnwiredIntakeNotifier};

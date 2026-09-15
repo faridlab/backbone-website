@@ -98,7 +98,6 @@ imports:
   - visitor.model.yaml        # Visitor
   - visitor_track.model.yaml  # VisitorTrack
   - contact_message.model.yaml# ContactMessage
-  - website_audit_log.model.yaml # WebsiteAuditLog
 
 # =============================================================================
 # FLAG-ID COVERAGE — the register rows this module closes

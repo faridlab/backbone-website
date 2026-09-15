@@ -185,4 +185,3 @@ pub fn create_protected_website_member_routes<A: AuthMiddleware + Send + Sync + 
             }
         }))
 }
-

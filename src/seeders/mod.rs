@@ -18,7 +18,6 @@ mod redirect_seeder;
 mod visitor_seeder;
 mod visitor_track_seeder;
 mod website_seeder;
-mod website_audit_log_seeder;
 mod website_member_seeder;
 
 pub use contact_message_seeder::SeedContactMessageSeeder;
@@ -30,7 +29,6 @@ pub use redirect_seeder::SeedRedirectSeeder;
 pub use visitor_seeder::SeedVisitorSeeder;
 pub use visitor_track_seeder::SeedVisitorTrackSeeder;
 pub use website_seeder::SeedWebsiteSeeder;
-pub use website_audit_log_seeder::SeedWebsiteAuditLogSeeder;
 pub use website_member_seeder::SeedWebsiteMemberSeeder;
 
 // ============================================================================
@@ -82,4 +80,3 @@ pub enum SeederType {
 // <<< CUSTOM SEEDERS START >>>
 // Add custom seeders here
 // <<< CUSTOM SEEDERS END >>>
-

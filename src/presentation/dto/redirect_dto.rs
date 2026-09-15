@@ -285,4 +285,3 @@ impl backbone_core::ApplyUpdateDto<UpdateRedirectDto> for Redirect {
 // Add custom DTOs specific to Redirect here.
 // This section will be preserved during regeneration.
 // >>> END CUSTOM DTOs
-

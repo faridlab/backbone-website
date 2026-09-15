@@ -14,7 +14,6 @@ pub mod redirect_dto;
 pub mod visitor_dto;
 pub mod visitor_track_dto;
 pub mod website_dto;
-pub mod website_audit_log_dto;
 pub mod website_member_dto;
 
 // Re-exports
@@ -89,14 +88,6 @@ pub use website_dto::{
     WebsiteResponseDto,
     WebsiteListResponseDto,
     WebsiteSummaryDto,
-};
-pub use website_audit_log_dto::{
-    CreateWebsiteAuditLogDto,
-    UpdateWebsiteAuditLogDto,
-    PatchWebsiteAuditLogDto,
-    WebsiteAuditLogResponseDto,
-    WebsiteAuditLogListResponseDto,
-    WebsiteAuditLogSummaryDto,
 };
 pub use website_member_dto::{
     CreateWebsiteMemberDto,

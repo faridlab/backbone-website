@@ -13,7 +13,6 @@ mod redirect_repository;
 mod visitor_repository;
 mod visitor_track_repository;
 mod website_repository;
-mod website_audit_log_repository;
 mod website_member_repository;
 
 // Custom persistence modules
@@ -30,7 +29,6 @@ pub use redirect_repository::RedirectRepository;
 pub use visitor_repository::VisitorRepository;
 pub use visitor_track_repository::VisitorTrackRepository;
 pub use website_repository::WebsiteRepository;
-pub use website_audit_log_repository::WebsiteAuditLogRepository;
 pub use website_member_repository::WebsiteMemberRepository;
 
 // Re-export backbone-orm types

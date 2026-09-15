@@ -18,7 +18,6 @@ use crate::application::service::RedirectService;
 use crate::application::service::VisitorService;
 use crate::application::service::VisitorTrackService;
 use crate::application::service::WebsiteService;
-use crate::application::service::WebsiteAuditLogService;
 use crate::application::service::WebsiteMemberService;
 
 /// Application state for dependency injection.
@@ -57,8 +56,6 @@ pub struct AppState {
     pub visitor_track_service: Arc<VisitorTrackService>,
     /// Website service
     pub website_service: Arc<WebsiteService>,
-    /// WebsiteAuditLog service
-    pub website_audit_log_service: Arc<WebsiteAuditLogService>,
     /// WebsiteMember service
     pub website_member_service: Arc<WebsiteMemberService>,
 }
@@ -75,7 +72,6 @@ impl AppState {
         visitor_service: Arc<VisitorService>,
         visitor_track_service: Arc<VisitorTrackService>,
         website_service: Arc<WebsiteService>,
-        website_audit_log_service: Arc<WebsiteAuditLogService>,
         website_member_service: Arc<WebsiteMemberService>
     ) -> Self {
         Self {
@@ -88,7 +84,6 @@ impl AppState {
             visitor_service,
             visitor_track_service,
             website_service,
-            website_audit_log_service,
             website_member_service,
         }
     }
@@ -105,7 +100,6 @@ impl AppState {
             visitor_service: module.visitor_service.clone(),
             visitor_track_service: module.visitor_track_service.clone(),
             website_service: module.website_service.clone(),
-            website_audit_log_service: module.website_audit_log_service.clone(),
             website_member_service: module.website_member_service.clone(),
         }
     }
@@ -125,7 +119,6 @@ pub struct AppStateBuilder {
     visitor_service: Option<Arc<VisitorService>>,
     visitor_track_service: Option<Arc<VisitorTrackService>>,
     website_service: Option<Arc<WebsiteService>>,
-    website_audit_log_service: Option<Arc<WebsiteAuditLogService>>,
     website_member_service: Option<Arc<WebsiteMemberService>>,
 }
 
@@ -189,12 +182,6 @@ impl AppStateBuilder {
         self
     }
 
-    /// Set the WebsiteAuditLog service.
-    pub fn with_website_audit_log_service(mut self, service: Arc<WebsiteAuditLogService>) -> Self {
-        self.website_audit_log_service = Some(service);
-        self
-    }
-
     /// Set the WebsiteMember service.
     pub fn with_website_member_service(mut self, service: Arc<WebsiteMemberService>) -> Self {
         self.website_member_service = Some(service);
@@ -217,7 +204,6 @@ impl AppStateBuilder {
             visitor_service: self.visitor_service.expect("visitor_service is required"),
             visitor_track_service: self.visitor_track_service.expect("visitor_track_service is required"),
             website_service: self.website_service.expect("website_service is required"),
-            website_audit_log_service: self.website_audit_log_service.expect("website_audit_log_service is required"),
             website_member_service: self.website_member_service.expect("website_member_service is required"),
         }
     }

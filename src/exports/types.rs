@@ -555,64 +555,6 @@ pub struct WebsiteRef {
 }
 
 // ============================================================================
-// WEBSITEAUDITLOG TYPES
-// ============================================================================
-
-/// Type-safe ID for WebsiteAuditLog
-///
-/// Use this instead of raw Uuid for type safety across modules.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct WebsiteAuditLogId(pub Uuid);
-
-impl WebsiteAuditLogId {
-    pub fn new(id: Uuid) -> Self {
-        Self(id)
-    }
-
-    pub fn into_inner(self) -> Uuid {
-        self.0
-    }
-}
-
-impl From<Uuid> for WebsiteAuditLogId {
-    fn from(id: Uuid) -> Self {
-        Self(id)
-    }
-}
-
-impl From<WebsiteAuditLogId> for Uuid {
-    fn from(id: WebsiteAuditLogId) -> Self {
-        id.0
-    }
-}
-
-/// Data transfer object for WebsiteAuditLog
-///
-/// This is the public representation of WebsiteAuditLog for other modules.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WebsiteAuditLogDto {
-    pub id: WebsiteAuditLogId,
-    pub event: WebsiteAuditEvent,
-    pub actor: Option<Uuid>,
-    pub subject_type: Option<String>,
-    pub subject_id: Option<Uuid>,
-    pub detail: Option<serde_json::Value>,
-    pub occurred_at: DateTime<Utc>,
-}
-
-/// Summary view of WebsiteAuditLog for list displays
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WebsiteAuditLogSummary {
-    pub id: WebsiteAuditLogId,
-}
-
-/// Reference to WebsiteAuditLog for foreign key relationships
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WebsiteAuditLogRef {
-    pub id: WebsiteAuditLogId,
-}
-
-// ============================================================================
 // WEBSITEMEMBER TYPES
 // ============================================================================
 

@@ -15,7 +15,6 @@ pub mod redirect_specification;
 pub mod visitor_specification;
 pub mod visitor_track_specification;
 pub mod website_specification;
-pub mod website_audit_log_specification;
 pub mod website_member_specification;
 
 // <<< CUSTOM

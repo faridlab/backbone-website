@@ -11,7 +11,6 @@ pub mod redirect_domain_policy;
 pub mod visitor_domain_policy;
 pub mod visitor_track_domain_policy;
 pub mod website_domain_policy;
-pub mod website_audit_log_domain_policy;
 pub mod website_member_domain_policy;
 
 pub use contact_message_domain_policy::ContactMessageDomainPolicy;
@@ -23,7 +22,6 @@ pub use redirect_domain_policy::RedirectDomainPolicy;
 pub use visitor_domain_policy::VisitorDomainPolicy;
 pub use visitor_track_domain_policy::VisitorTrackDomainPolicy;
 pub use website_domain_policy::WebsiteDomainPolicy;
-pub use website_audit_log_domain_policy::WebsiteAuditLogDomainPolicy;
 pub use website_member_domain_policy::WebsiteMemberDomainPolicy;
 
 // <<< CUSTOM

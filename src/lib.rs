@@ -41,7 +41,6 @@ pub use application::service::RedirectService;
 pub use application::service::VisitorService;
 pub use application::service::VisitorTrackService;
 pub use application::service::WebsiteService;
-pub use application::service::WebsiteAuditLogService;
 pub use application::service::WebsiteMemberService;
 
 use std::sync::Arc;
@@ -70,7 +69,6 @@ pub struct WebsiteModule {
     pub(crate) visitor_service: Arc<VisitorService>,
     pub(crate) visitor_track_service: Arc<VisitorTrackService>,
     pub(crate) website_service: Arc<WebsiteService>,
-    pub(crate) website_audit_log_service: Arc<WebsiteAuditLogService>,
     pub(crate) website_member_service: Arc<WebsiteMemberService>,
     // <<< CUSTOM FIELDS
     // END CUSTOM
@@ -98,7 +96,6 @@ impl WebsiteModule {
             create_visitor_read_routes,
             create_visitor_track_read_routes,
             create_website_read_routes,
-            create_website_audit_log_read_routes,
             create_website_member_read_routes,
         };
 
@@ -112,7 +109,6 @@ impl WebsiteModule {
             .merge(create_visitor_read_routes(self.visitor_service.clone()))
             .merge(create_visitor_track_read_routes(self.visitor_track_service.clone()))
             .merge(create_website_read_routes(self.website_service.clone()))
-            .merge(create_website_audit_log_read_routes(self.website_audit_log_service.clone()))
             .merge(create_website_member_read_routes(self.website_member_service.clone()))
     }
 
@@ -142,7 +138,6 @@ impl WebsiteModule {
             create_visitor_read_routes,
             create_visitor_track_read_routes,
             create_website_read_routes,
-            create_website_audit_log_read_routes,
             create_website_member_read_routes,
         };
 
@@ -156,7 +151,6 @@ impl WebsiteModule {
             .merge(create_visitor_read_routes(self.visitor_service.clone()))
             .merge(create_visitor_track_read_routes(self.visitor_track_service.clone()))
             .merge(create_website_read_routes(self.website_service.clone()))
-            .merge(create_website_audit_log_read_routes(self.website_audit_log_service.clone()))
             .merge(create_website_member_read_routes(self.website_member_service.clone()))
     }
 
@@ -227,10 +221,6 @@ impl WebsiteModuleBuilder {
         let website_repository = Arc::new(WebsiteRepository::new(db_pool.clone()));
         let website_service = Arc::new(WebsiteService::with_repository(website_repository.clone()));
 
-        // WebsiteAuditLog service
-        let website_audit_log_repository = Arc::new(WebsiteAuditLogRepository::new(db_pool.clone()));
-        let website_audit_log_service = Arc::new(WebsiteAuditLogService::with_repository(website_audit_log_repository.clone()));
-
         // WebsiteMember service
         let website_member_repository = Arc::new(WebsiteMemberRepository::new(db_pool.clone()));
         let website_member_service = Arc::new(WebsiteMemberService::with_repository(website_member_repository.clone()));
@@ -248,7 +238,6 @@ impl WebsiteModuleBuilder {
             visitor_service,
             visitor_track_service,
             website_service,
-            website_audit_log_service,
             website_member_service,
             // <<< CUSTOM
             // END CUSTOM

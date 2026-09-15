@@ -185,4 +185,3 @@ pub fn create_protected_menu_block_routes<A: AuthMiddleware + Send + Sync + 'sta
             }
         }))
 }
-

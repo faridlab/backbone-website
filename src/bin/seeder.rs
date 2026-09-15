@@ -21,7 +21,6 @@ use backbone_website::seeders::SeedRedirectSeeder;
 use backbone_website::seeders::SeedVisitorSeeder;
 use backbone_website::seeders::SeedVisitorTrackSeeder;
 use backbone_website::seeders::SeedWebsiteSeeder;
-use backbone_website::seeders::SeedWebsiteAuditLogSeeder;
 use backbone_website::seeders::SeedWebsiteMemberSeeder;
 use backbone_website::seeders::Seeder;
 
@@ -60,7 +59,6 @@ async fn main() -> Result<()> {
     seeders.push(Box::new(SeedVisitorSeeder::new()));
     seeders.push(Box::new(SeedVisitorTrackSeeder::new()));
     seeders.push(Box::new(SeedWebsiteSeeder::new()));
-    seeders.push(Box::new(SeedWebsiteAuditLogSeeder::new()));
     seeders.push(Box::new(SeedWebsiteMemberSeeder::new()));
 
     // Sort by order

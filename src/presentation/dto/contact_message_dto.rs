@@ -286,4 +286,3 @@ impl backbone_core::ApplyUpdateDto<UpdateContactMessageDto> for ContactMessage {
 // Add custom DTOs specific to ContactMessage here.
 // This section will be preserved during regeneration.
 // >>> END CUSTOM DTOs
-

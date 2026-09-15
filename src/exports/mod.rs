@@ -54,9 +54,6 @@ pub use events::*;
 /// - `WebsiteDto` - Data transfer object for Website
 /// - `WebsiteSummary` - Summary view of Website
 /// - `WebsiteId` - Type-safe ID wrapper
-/// - `WebsiteAuditLogDto` - Data transfer object for WebsiteAuditLog
-/// - `WebsiteAuditLogSummary` - Summary view of WebsiteAuditLog
-/// - `WebsiteAuditLogId` - Type-safe ID wrapper
 /// - `WebsiteMemberDto` - Data transfer object for WebsiteMember
 /// - `WebsiteMemberSummary` - Summary view of WebsiteMember
 /// - `WebsiteMemberId` - Type-safe ID wrapper
@@ -89,9 +86,6 @@ pub use events::*;
 /// - `WebsiteCreatedEvent` - Published when Website is created
 /// - `WebsiteUpdatedEvent` - Published when Website is updated
 /// - `WebsiteDeletedEvent` - Published when Website is deleted
-/// - `WebsiteAuditLogCreatedEvent` - Published when WebsiteAuditLog is created
-/// - `WebsiteAuditLogUpdatedEvent` - Published when WebsiteAuditLog is updated
-/// - `WebsiteAuditLogDeletedEvent` - Published when WebsiteAuditLog is deleted
 /// - `WebsiteMemberCreatedEvent` - Published when WebsiteMember is created
 /// - `WebsiteMemberUpdatedEvent` - Published when WebsiteMember is updated
 /// - `WebsiteMemberDeletedEvent` - Published when WebsiteMember is deleted

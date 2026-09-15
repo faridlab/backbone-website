@@ -15,7 +15,6 @@ pub mod redirect_repository;
 pub mod visitor_repository;
 pub mod visitor_track_repository;
 pub mod website_repository;
-pub mod website_audit_log_repository;
 pub mod website_member_repository;
 
 // Re-exports
@@ -72,12 +71,6 @@ pub use website_repository::{
     WebsitePaginationParams,
     WebsitePaginatedResult,
     WebsiteFilter,
-};
-pub use website_audit_log_repository::{
-    WebsiteAuditLogRepository,
-    WebsiteAuditLogPaginationParams,
-    WebsiteAuditLogPaginatedResult,
-    WebsiteAuditLogFilter,
 };
 pub use website_member_repository::{
     WebsiteMemberRepository,

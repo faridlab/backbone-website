@@ -14,7 +14,6 @@ pub mod redirect_validator;
 pub mod visitor_validator;
 pub mod visitor_track_validator;
 pub mod website_validator;
-pub mod website_audit_log_validator;
 pub mod website_member_validator;
 
 pub use contact_message_validator::{ContactMessageValidator, contact_message_validator};
@@ -26,7 +25,6 @@ pub use redirect_validator::{RedirectValidator, redirect_validator};
 pub use visitor_validator::{VisitorValidator, visitor_validator};
 pub use visitor_track_validator::{VisitorTrackValidator, visitor_track_validator};
 pub use website_validator::{WebsiteValidator, website_validator};
-pub use website_audit_log_validator::{WebsiteAuditLogValidator, website_audit_log_validator};
 pub use website_member_validator::{WebsiteMemberValidator, website_member_validator};
 
 // <<< CUSTOM

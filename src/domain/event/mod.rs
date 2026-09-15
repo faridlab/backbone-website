@@ -20,8 +20,6 @@ pub mod visitor_track_events;
 pub mod visitor_track_event_handlers;
 pub mod website_events;
 pub mod website_event_handlers;
-pub mod website_audit_log_events;
-pub mod website_audit_log_event_handlers;
 pub mod website_member_events;
 pub mod website_member_event_handlers;
 
@@ -43,8 +41,6 @@ pub use visitor_track_events::{VisitorTrackEvent, VisitorTrackEventPublisher, No
 pub use visitor_track_event_handlers::VisitorTrackEventHandler;
 pub use website_events::{WebsiteEvent, WebsiteEventPublisher, NoopWebsiteEventPublisher};
 pub use website_event_handlers::WebsiteEventHandler;
-pub use website_audit_log_events::{WebsiteAuditLogEvent, WebsiteAuditLogEventPublisher, NoopWebsiteAuditLogEventPublisher};
-pub use website_audit_log_event_handlers::WebsiteAuditLogEventHandler;
 pub use website_member_events::{WebsiteMemberEvent, WebsiteMemberEventPublisher, NoopWebsiteMemberEventPublisher};
 pub use website_member_event_handlers::WebsiteMemberEventHandler;
 

@@ -11,14 +11,12 @@ pub mod redirect;
 pub mod visitor;
 pub mod visitor_track;
 pub mod website;
-pub mod website_audit_log;
 pub mod website_member;
 pub mod website_menu_block_kind;
 pub mod website_visibility;
 pub mod website_page_block_kind;
 pub mod website_redirect_type;
 pub mod website_visitor_kind;
-pub mod website_audit_event;
 pub mod website_member_role;
 
 // Re-exports
@@ -49,9 +47,6 @@ pub use visitor_track::VisitorTrackId;
 pub use website::Website;
 pub use website::WebsiteBuilder;
 pub use website::WebsiteId;
-pub use website_audit_log::WebsiteAuditLog;
-pub use website_audit_log::WebsiteAuditLogBuilder;
-pub use website_audit_log::WebsiteAuditLogId;
 pub use website_member::WebsiteMember;
 pub use website_member::WebsiteMemberBuilder;
 pub use website_member::WebsiteMemberId;
@@ -60,7 +55,6 @@ pub use website_visibility::WebsiteVisibility;
 pub use website_page_block_kind::WebsitePageBlockKind;
 pub use website_redirect_type::WebsiteRedirectType;
 pub use website_visitor_kind::WebsiteVisitorKind;
-pub use website_audit_event::WebsiteAuditEvent;
 pub use website_member_role::WebsiteMemberRole;
 
 // ==========================================================================

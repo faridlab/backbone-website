@@ -14,7 +14,6 @@ pub mod redirect_handler;
 pub mod visitor_handler;
 pub mod visitor_track_handler;
 pub mod website_handler;
-pub mod website_audit_log_handler;
 pub mod website_member_handler;
 
 // <<< CUSTOM
@@ -33,7 +32,6 @@ pub use redirect_handler::{create_redirect_routes, create_redirect_read_routes, 
 pub use visitor_handler::{create_visitor_routes, create_visitor_read_routes, create_visitor_write_routes};
 pub use visitor_track_handler::{create_visitor_track_routes, create_visitor_track_read_routes, create_visitor_track_write_routes};
 pub use website_handler::{create_website_routes, create_website_read_routes, create_website_write_routes};
-pub use website_audit_log_handler::{create_website_audit_log_routes, create_website_audit_log_read_routes, create_website_audit_log_write_routes};
 pub use website_member_handler::{create_website_member_routes, create_website_member_read_routes, create_website_member_write_routes};
 // <<< CUSTOM
 pub use admin_routes::{website_admin_routes, WebsiteAdminState, WebsiteActor};

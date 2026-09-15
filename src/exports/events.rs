@@ -254,33 +254,6 @@ pub struct WebsiteDeletedEvent {
 }
 
 // ============================================================================
-// WEBSITEAUDITLOG EVENTS
-// ============================================================================
-
-/// Event published when a WebsiteAuditLog is created
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WebsiteAuditLogCreatedEvent {
-    pub id: WebsiteAuditLogId,
-    pub data: WebsiteAuditLogDto,
-    pub occurred_at: DateTime<Utc>,
-}
-
-/// Event published when a WebsiteAuditLog is updated
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WebsiteAuditLogUpdatedEvent {
-    pub id: WebsiteAuditLogId,
-    pub data: WebsiteAuditLogDto,
-    pub occurred_at: DateTime<Utc>,
-}
-
-/// Event published when a WebsiteAuditLog is deleted
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WebsiteAuditLogDeletedEvent {
-    pub id: WebsiteAuditLogId,
-    pub occurred_at: DateTime<Utc>,
-}
-
-// ============================================================================
 // WEBSITEMEMBER EVENTS
 // ============================================================================
 
@@ -342,9 +315,6 @@ pub enum WebsiteEvent {
     WebsiteCreated(WebsiteCreatedEvent),
     WebsiteUpdated(WebsiteUpdatedEvent),
     WebsiteDeleted(WebsiteDeletedEvent),
-    WebsiteAuditLogCreated(WebsiteAuditLogCreatedEvent),
-    WebsiteAuditLogUpdated(WebsiteAuditLogUpdatedEvent),
-    WebsiteAuditLogDeleted(WebsiteAuditLogDeletedEvent),
     WebsiteMemberCreated(WebsiteMemberCreatedEvent),
     WebsiteMemberUpdated(WebsiteMemberUpdatedEvent),
     WebsiteMemberDeleted(WebsiteMemberDeletedEvent),
