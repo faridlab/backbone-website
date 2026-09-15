@@ -157,19 +157,32 @@ pub async fn record_audit(
     subject_id: Option<Uuid>,
     detail: Option<serde_json::Value>,
 ) -> Result<(), WebsiteError> {
-    sqlx::query(
-        r#"
-        INSERT INTO website.website_audit_log
-            (id, event, actor, subject_type, subject_id, detail, occurred_at)
-        VALUES (gen_random_uuid(), $1::website_audit_event, $2, $3, $4, $5, now())
-        "#,
+    // Consolidated onto `auditlog.audit_trails` — one trail for the holding,
+    // readable by the record-history and activity-feed surfaces, instead of a
+    // table only this module knows about. The actor is passed explicitly: this
+    // verb was handed one, and the trail's session-GUC default would attribute
+    // the write to the request owner, or to `system` outside a request.
+    //
+    // `subject_type` is normalised to the schema-qualified table name the
+    // capture trigger writes, so a row audited by a verb and a row audited by a
+    // trigger key the same way.
+    backbone_auditlog::application::service::append(
+        exec,
+        backbone_auditlog::application::service::AuditEvent {
+            event_type: backbone_auditlog::domain::entity::AuditEventType::DataChange,
+            action: event.to_string(),
+            subject_type: subject_type.map(|s| {
+                if s.contains('.') { s.to_string() } else { format!("website.{s}") }
+            }),
+            subject_id: subject_id.map(|id| id.to_string()),
+            changed: detail,
+            reason: None,
+            status: backbone_auditlog::domain::entity::AuditStatus::Success,
+            // `None` here would fall back to the session GUC; the actor this
+            // verb was handed is the truthful answer when it has one.
+            actor: actor.stamp().map(|id| id.to_string()),
+        },
     )
-    .bind(event)
-    .bind(actor.stamp())
-    .bind(subject_type)
-    .bind(subject_id)
-    .bind(detail)
-    .execute(exec)
     .await?;
     Ok(())
 }
