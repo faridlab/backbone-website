@@ -7,7 +7,7 @@ info:
     This API provides 11 standard CRUD endpoints for each model.
 
 servers:
-  - url: http://localhost:3000
+  - url: /
     description: Development server
 
 tags:
@@ -35,7 +35,7 @@ tags:
     description: WebsiteMember management endpoints
 
 paths:
-  /api/v1/contact_messages:
+  /api/v1/website/contact_messages:
     get:
       tags:
         - ContactMessages
@@ -81,7 +81,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /api/v1/contact_messages/{id}:
+  /api/v1/website/contact_messages/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
 
@@ -153,7 +153,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/contact_messages/bulk:
+  /api/v1/website/contact_messages/bulk:
     post:
       tags:
         - ContactMessages
@@ -245,7 +245,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/contact_messages/upsert:
+  /api/v1/website/contact_messages/upsert:
     post:
       tags:
         - ContactMessages
@@ -275,7 +275,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ContactMessage'
 
-  /api/v1/contact_messages/trash:
+  /api/v1/website/contact_messages/trash:
     get:
       tags:
         - ContactMessages
@@ -292,7 +292,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ContactMessageList'
 
-  /api/v1/contact_messages/{id}/restore:
+  /api/v1/website/contact_messages/{id}/restore:
     parameters:
       - $ref: '#/components/parameters/IdParam'
     post:
@@ -310,7 +310,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/contact_messages/empty:
+  /api/v1/website/contact_messages/empty:
     delete:
       tags:
         - ContactMessages
@@ -327,7 +327,7 @@ paths:
                   deleted_count:
                     type: integer
 
-  /api/v1/contact_messages/delete/bulk:
+  /api/v1/website/contact_messages/delete/bulk:
     post:
       tags:
         - ContactMessages
@@ -347,7 +347,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/contact_messages/restore/bulk:
+  /api/v1/website/contact_messages/restore/bulk:
     post:
       tags:
         - ContactMessages
@@ -365,7 +365,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/contact_messages/restore/all:
+  /api/v1/website/contact_messages/restore/all:
     post:
       tags:
         - ContactMessages
@@ -381,7 +381,7 @@ paths:
                 properties:
                   restored: { type: integer }
 
-  /api/v1/contact_messages/trash/bulk:
+  /api/v1/website/contact_messages/trash/bulk:
     delete:
       tags:
         - ContactMessages
@@ -401,7 +401,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/menus:
+  /api/v1/website/menus:
     get:
       tags:
         - Menus
@@ -447,7 +447,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /api/v1/menus/{id}:
+  /api/v1/website/menus/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
 
@@ -519,7 +519,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/menus/bulk:
+  /api/v1/website/menus/bulk:
     post:
       tags:
         - Menus
@@ -611,7 +611,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/menus/upsert:
+  /api/v1/website/menus/upsert:
     post:
       tags:
         - Menus
@@ -641,7 +641,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Menu'
 
-  /api/v1/menus/trash:
+  /api/v1/website/menus/trash:
     get:
       tags:
         - Menus
@@ -658,7 +658,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/MenuList'
 
-  /api/v1/menus/{id}/restore:
+  /api/v1/website/menus/{id}/restore:
     parameters:
       - $ref: '#/components/parameters/IdParam'
     post:
@@ -676,7 +676,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/menus/empty:
+  /api/v1/website/menus/empty:
     delete:
       tags:
         - Menus
@@ -693,7 +693,7 @@ paths:
                   deleted_count:
                     type: integer
 
-  /api/v1/menus/delete/bulk:
+  /api/v1/website/menus/delete/bulk:
     post:
       tags:
         - Menus
@@ -713,7 +713,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/menus/restore/bulk:
+  /api/v1/website/menus/restore/bulk:
     post:
       tags:
         - Menus
@@ -731,7 +731,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/menus/restore/all:
+  /api/v1/website/menus/restore/all:
     post:
       tags:
         - Menus
@@ -747,7 +747,7 @@ paths:
                 properties:
                   restored: { type: integer }
 
-  /api/v1/menus/trash/bulk:
+  /api/v1/website/menus/trash/bulk:
     delete:
       tags:
         - Menus
@@ -767,7 +767,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/menu_blocks:
+  /api/v1/website/menu_blocks:
     get:
       tags:
         - MenuBlocks
@@ -813,7 +813,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /api/v1/menu_blocks/{id}:
+  /api/v1/website/menu_blocks/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
 
@@ -885,7 +885,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/menu_blocks/bulk:
+  /api/v1/website/menu_blocks/bulk:
     post:
       tags:
         - MenuBlocks
@@ -977,7 +977,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/menu_blocks/upsert:
+  /api/v1/website/menu_blocks/upsert:
     post:
       tags:
         - MenuBlocks
@@ -1007,7 +1007,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/MenuBlock'
 
-  /api/v1/menu_blocks/trash:
+  /api/v1/website/menu_blocks/trash:
     get:
       tags:
         - MenuBlocks
@@ -1024,7 +1024,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/MenuBlockList'
 
-  /api/v1/menu_blocks/{id}/restore:
+  /api/v1/website/menu_blocks/{id}/restore:
     parameters:
       - $ref: '#/components/parameters/IdParam'
     post:
@@ -1042,7 +1042,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/menu_blocks/empty:
+  /api/v1/website/menu_blocks/empty:
     delete:
       tags:
         - MenuBlocks
@@ -1059,7 +1059,7 @@ paths:
                   deleted_count:
                     type: integer
 
-  /api/v1/menu_blocks/delete/bulk:
+  /api/v1/website/menu_blocks/delete/bulk:
     post:
       tags:
         - MenuBlocks
@@ -1079,7 +1079,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/menu_blocks/restore/bulk:
+  /api/v1/website/menu_blocks/restore/bulk:
     post:
       tags:
         - MenuBlocks
@@ -1097,7 +1097,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/menu_blocks/restore/all:
+  /api/v1/website/menu_blocks/restore/all:
     post:
       tags:
         - MenuBlocks
@@ -1113,7 +1113,7 @@ paths:
                 properties:
                   restored: { type: integer }
 
-  /api/v1/menu_blocks/trash/bulk:
+  /api/v1/website/menu_blocks/trash/bulk:
     delete:
       tags:
         - MenuBlocks
@@ -1133,7 +1133,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/pages:
+  /api/v1/website/pages:
     get:
       tags:
         - Pages
@@ -1179,7 +1179,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /api/v1/pages/{id}:
+  /api/v1/website/pages/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
 
@@ -1251,7 +1251,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/pages/bulk:
+  /api/v1/website/pages/bulk:
     post:
       tags:
         - Pages
@@ -1343,7 +1343,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/pages/upsert:
+  /api/v1/website/pages/upsert:
     post:
       tags:
         - Pages
@@ -1373,7 +1373,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Page'
 
-  /api/v1/pages/trash:
+  /api/v1/website/pages/trash:
     get:
       tags:
         - Pages
@@ -1390,7 +1390,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/PageList'
 
-  /api/v1/pages/{id}/restore:
+  /api/v1/website/pages/{id}/restore:
     parameters:
       - $ref: '#/components/parameters/IdParam'
     post:
@@ -1408,7 +1408,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/pages/empty:
+  /api/v1/website/pages/empty:
     delete:
       tags:
         - Pages
@@ -1425,7 +1425,7 @@ paths:
                   deleted_count:
                     type: integer
 
-  /api/v1/pages/delete/bulk:
+  /api/v1/website/pages/delete/bulk:
     post:
       tags:
         - Pages
@@ -1445,7 +1445,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/pages/restore/bulk:
+  /api/v1/website/pages/restore/bulk:
     post:
       tags:
         - Pages
@@ -1463,7 +1463,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/pages/restore/all:
+  /api/v1/website/pages/restore/all:
     post:
       tags:
         - Pages
@@ -1479,7 +1479,7 @@ paths:
                 properties:
                   restored: { type: integer }
 
-  /api/v1/pages/trash/bulk:
+  /api/v1/website/pages/trash/bulk:
     delete:
       tags:
         - Pages
@@ -1499,7 +1499,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/page_blocks:
+  /api/v1/website/page_blocks:
     get:
       tags:
         - PageBlocks
@@ -1545,7 +1545,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /api/v1/page_blocks/{id}:
+  /api/v1/website/page_blocks/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
 
@@ -1617,7 +1617,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/page_blocks/bulk:
+  /api/v1/website/page_blocks/bulk:
     post:
       tags:
         - PageBlocks
@@ -1709,7 +1709,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/page_blocks/upsert:
+  /api/v1/website/page_blocks/upsert:
     post:
       tags:
         - PageBlocks
@@ -1739,7 +1739,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/PageBlock'
 
-  /api/v1/page_blocks/trash:
+  /api/v1/website/page_blocks/trash:
     get:
       tags:
         - PageBlocks
@@ -1756,7 +1756,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/PageBlockList'
 
-  /api/v1/page_blocks/{id}/restore:
+  /api/v1/website/page_blocks/{id}/restore:
     parameters:
       - $ref: '#/components/parameters/IdParam'
     post:
@@ -1774,7 +1774,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/page_blocks/empty:
+  /api/v1/website/page_blocks/empty:
     delete:
       tags:
         - PageBlocks
@@ -1791,7 +1791,7 @@ paths:
                   deleted_count:
                     type: integer
 
-  /api/v1/page_blocks/delete/bulk:
+  /api/v1/website/page_blocks/delete/bulk:
     post:
       tags:
         - PageBlocks
@@ -1811,7 +1811,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/page_blocks/restore/bulk:
+  /api/v1/website/page_blocks/restore/bulk:
     post:
       tags:
         - PageBlocks
@@ -1829,7 +1829,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/page_blocks/restore/all:
+  /api/v1/website/page_blocks/restore/all:
     post:
       tags:
         - PageBlocks
@@ -1845,7 +1845,7 @@ paths:
                 properties:
                   restored: { type: integer }
 
-  /api/v1/page_blocks/trash/bulk:
+  /api/v1/website/page_blocks/trash/bulk:
     delete:
       tags:
         - PageBlocks
@@ -1865,7 +1865,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/redirects:
+  /api/v1/website/redirects:
     get:
       tags:
         - Redirects
@@ -1911,7 +1911,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /api/v1/redirects/{id}:
+  /api/v1/website/redirects/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
 
@@ -1983,7 +1983,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/redirects/bulk:
+  /api/v1/website/redirects/bulk:
     post:
       tags:
         - Redirects
@@ -2075,7 +2075,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/redirects/upsert:
+  /api/v1/website/redirects/upsert:
     post:
       tags:
         - Redirects
@@ -2105,7 +2105,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Redirect'
 
-  /api/v1/redirects/trash:
+  /api/v1/website/redirects/trash:
     get:
       tags:
         - Redirects
@@ -2122,7 +2122,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/RedirectList'
 
-  /api/v1/redirects/{id}/restore:
+  /api/v1/website/redirects/{id}/restore:
     parameters:
       - $ref: '#/components/parameters/IdParam'
     post:
@@ -2140,7 +2140,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/redirects/empty:
+  /api/v1/website/redirects/empty:
     delete:
       tags:
         - Redirects
@@ -2157,7 +2157,7 @@ paths:
                   deleted_count:
                     type: integer
 
-  /api/v1/redirects/delete/bulk:
+  /api/v1/website/redirects/delete/bulk:
     post:
       tags:
         - Redirects
@@ -2177,7 +2177,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/redirects/restore/bulk:
+  /api/v1/website/redirects/restore/bulk:
     post:
       tags:
         - Redirects
@@ -2195,7 +2195,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/redirects/restore/all:
+  /api/v1/website/redirects/restore/all:
     post:
       tags:
         - Redirects
@@ -2211,7 +2211,7 @@ paths:
                 properties:
                   restored: { type: integer }
 
-  /api/v1/redirects/trash/bulk:
+  /api/v1/website/redirects/trash/bulk:
     delete:
       tags:
         - Redirects
@@ -2231,7 +2231,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/visitors:
+  /api/v1/website/visitors:
     get:
       tags:
         - Visitors
@@ -2277,7 +2277,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /api/v1/visitors/{id}:
+  /api/v1/website/visitors/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
 
@@ -2349,7 +2349,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/visitors/bulk:
+  /api/v1/website/visitors/bulk:
     post:
       tags:
         - Visitors
@@ -2441,7 +2441,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/visitors/upsert:
+  /api/v1/website/visitors/upsert:
     post:
       tags:
         - Visitors
@@ -2471,7 +2471,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Visitor'
 
-  /api/v1/visitors/trash:
+  /api/v1/website/visitors/trash:
     get:
       tags:
         - Visitors
@@ -2488,7 +2488,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/VisitorList'
 
-  /api/v1/visitors/{id}/restore:
+  /api/v1/website/visitors/{id}/restore:
     parameters:
       - $ref: '#/components/parameters/IdParam'
     post:
@@ -2506,7 +2506,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/visitors/empty:
+  /api/v1/website/visitors/empty:
     delete:
       tags:
         - Visitors
@@ -2523,7 +2523,7 @@ paths:
                   deleted_count:
                     type: integer
 
-  /api/v1/visitors/delete/bulk:
+  /api/v1/website/visitors/delete/bulk:
     post:
       tags:
         - Visitors
@@ -2543,7 +2543,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/visitors/restore/bulk:
+  /api/v1/website/visitors/restore/bulk:
     post:
       tags:
         - Visitors
@@ -2561,7 +2561,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/visitors/restore/all:
+  /api/v1/website/visitors/restore/all:
     post:
       tags:
         - Visitors
@@ -2577,7 +2577,7 @@ paths:
                 properties:
                   restored: { type: integer }
 
-  /api/v1/visitors/trash/bulk:
+  /api/v1/website/visitors/trash/bulk:
     delete:
       tags:
         - Visitors
@@ -2597,7 +2597,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/visitor_tracks:
+  /api/v1/website/visitor_tracks:
     get:
       tags:
         - VisitorTracks
@@ -2643,7 +2643,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /api/v1/visitor_tracks/{id}:
+  /api/v1/website/visitor_tracks/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
 
@@ -2715,7 +2715,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/visitor_tracks/bulk:
+  /api/v1/website/visitor_tracks/bulk:
     post:
       tags:
         - VisitorTracks
@@ -2807,7 +2807,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/visitor_tracks/upsert:
+  /api/v1/website/visitor_tracks/upsert:
     post:
       tags:
         - VisitorTracks
@@ -2837,7 +2837,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/VisitorTrack'
 
-  /api/v1/visitor_tracks/trash:
+  /api/v1/website/visitor_tracks/trash:
     get:
       tags:
         - VisitorTracks
@@ -2854,7 +2854,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/VisitorTrackList'
 
-  /api/v1/visitor_tracks/{id}/restore:
+  /api/v1/website/visitor_tracks/{id}/restore:
     parameters:
       - $ref: '#/components/parameters/IdParam'
     post:
@@ -2872,7 +2872,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/visitor_tracks/empty:
+  /api/v1/website/visitor_tracks/empty:
     delete:
       tags:
         - VisitorTracks
@@ -2889,7 +2889,7 @@ paths:
                   deleted_count:
                     type: integer
 
-  /api/v1/visitor_tracks/delete/bulk:
+  /api/v1/website/visitor_tracks/delete/bulk:
     post:
       tags:
         - VisitorTracks
@@ -2909,7 +2909,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/visitor_tracks/restore/bulk:
+  /api/v1/website/visitor_tracks/restore/bulk:
     post:
       tags:
         - VisitorTracks
@@ -2927,7 +2927,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/visitor_tracks/restore/all:
+  /api/v1/website/visitor_tracks/restore/all:
     post:
       tags:
         - VisitorTracks
@@ -2943,7 +2943,7 @@ paths:
                 properties:
                   restored: { type: integer }
 
-  /api/v1/visitor_tracks/trash/bulk:
+  /api/v1/website/visitor_tracks/trash/bulk:
     delete:
       tags:
         - VisitorTracks
@@ -2963,7 +2963,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/websites:
+  /api/v1/website/websites:
     get:
       tags:
         - Websites
@@ -3009,7 +3009,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /api/v1/websites/{id}:
+  /api/v1/website/websites/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
 
@@ -3081,7 +3081,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/websites/bulk:
+  /api/v1/website/websites/bulk:
     post:
       tags:
         - Websites
@@ -3173,7 +3173,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/websites/upsert:
+  /api/v1/website/websites/upsert:
     post:
       tags:
         - Websites
@@ -3203,7 +3203,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Website'
 
-  /api/v1/websites/trash:
+  /api/v1/website/websites/trash:
     get:
       tags:
         - Websites
@@ -3220,7 +3220,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/WebsiteList'
 
-  /api/v1/websites/{id}/restore:
+  /api/v1/website/websites/{id}/restore:
     parameters:
       - $ref: '#/components/parameters/IdParam'
     post:
@@ -3238,7 +3238,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/websites/empty:
+  /api/v1/website/websites/empty:
     delete:
       tags:
         - Websites
@@ -3255,7 +3255,7 @@ paths:
                   deleted_count:
                     type: integer
 
-  /api/v1/websites/delete/bulk:
+  /api/v1/website/websites/delete/bulk:
     post:
       tags:
         - Websites
@@ -3275,7 +3275,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/websites/restore/bulk:
+  /api/v1/website/websites/restore/bulk:
     post:
       tags:
         - Websites
@@ -3293,7 +3293,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/websites/restore/all:
+  /api/v1/website/websites/restore/all:
     post:
       tags:
         - Websites
@@ -3309,7 +3309,7 @@ paths:
                 properties:
                   restored: { type: integer }
 
-  /api/v1/websites/trash/bulk:
+  /api/v1/website/websites/trash/bulk:
     delete:
       tags:
         - Websites
@@ -3329,7 +3329,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/website_audit_logs:
+  /api/v1/website/website_audit_logs:
     get:
       tags:
         - WebsiteAuditLogs
@@ -3375,7 +3375,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /api/v1/website_audit_logs/{id}:
+  /api/v1/website/website_audit_logs/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
 
@@ -3447,7 +3447,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/website_audit_logs/bulk:
+  /api/v1/website/website_audit_logs/bulk:
     post:
       tags:
         - WebsiteAuditLogs
@@ -3539,7 +3539,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/website_audit_logs/upsert:
+  /api/v1/website/website_audit_logs/upsert:
     post:
       tags:
         - WebsiteAuditLogs
@@ -3569,7 +3569,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/WebsiteAuditLog'
 
-  /api/v1/website_audit_logs/trash:
+  /api/v1/website/website_audit_logs/trash:
     get:
       tags:
         - WebsiteAuditLogs
@@ -3586,7 +3586,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/WebsiteAuditLogList'
 
-  /api/v1/website_audit_logs/{id}/restore:
+  /api/v1/website/website_audit_logs/{id}/restore:
     parameters:
       - $ref: '#/components/parameters/IdParam'
     post:
@@ -3604,7 +3604,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/website_audit_logs/empty:
+  /api/v1/website/website_audit_logs/empty:
     delete:
       tags:
         - WebsiteAuditLogs
@@ -3621,7 +3621,7 @@ paths:
                   deleted_count:
                     type: integer
 
-  /api/v1/website_audit_logs/delete/bulk:
+  /api/v1/website/website_audit_logs/delete/bulk:
     post:
       tags:
         - WebsiteAuditLogs
@@ -3641,7 +3641,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/website_audit_logs/restore/bulk:
+  /api/v1/website/website_audit_logs/restore/bulk:
     post:
       tags:
         - WebsiteAuditLogs
@@ -3659,7 +3659,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/website_audit_logs/restore/all:
+  /api/v1/website/website_audit_logs/restore/all:
     post:
       tags:
         - WebsiteAuditLogs
@@ -3675,7 +3675,7 @@ paths:
                 properties:
                   restored: { type: integer }
 
-  /api/v1/website_audit_logs/trash/bulk:
+  /api/v1/website/website_audit_logs/trash/bulk:
     delete:
       tags:
         - WebsiteAuditLogs
@@ -3695,7 +3695,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/website_members:
+  /api/v1/website/website_members:
     get:
       tags:
         - WebsiteMembers
@@ -3741,7 +3741,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /api/v1/website_members/{id}:
+  /api/v1/website/website_members/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
 
@@ -3813,7 +3813,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/website_members/bulk:
+  /api/v1/website/website_members/bulk:
     post:
       tags:
         - WebsiteMembers
@@ -3905,7 +3905,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/website_members/upsert:
+  /api/v1/website/website_members/upsert:
     post:
       tags:
         - WebsiteMembers
@@ -3935,7 +3935,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/WebsiteMember'
 
-  /api/v1/website_members/trash:
+  /api/v1/website/website_members/trash:
     get:
       tags:
         - WebsiteMembers
@@ -3952,7 +3952,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/WebsiteMemberList'
 
-  /api/v1/website_members/{id}/restore:
+  /api/v1/website/website_members/{id}/restore:
     parameters:
       - $ref: '#/components/parameters/IdParam'
     post:
@@ -3970,7 +3970,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/website_members/empty:
+  /api/v1/website/website_members/empty:
     delete:
       tags:
         - WebsiteMembers
@@ -3987,7 +3987,7 @@ paths:
                   deleted_count:
                     type: integer
 
-  /api/v1/website_members/delete/bulk:
+  /api/v1/website/website_members/delete/bulk:
     post:
       tags:
         - WebsiteMembers
@@ -4007,7 +4007,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/website_members/restore/bulk:
+  /api/v1/website/website_members/restore/bulk:
     post:
       tags:
         - WebsiteMembers
@@ -4025,7 +4025,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/website_members/restore/all:
+  /api/v1/website/website_members/restore/all:
     post:
       tags:
         - WebsiteMembers
@@ -4041,7 +4041,7 @@ paths:
                 properties:
                   restored: { type: integer }
 
-  /api/v1/website_members/trash/bulk:
+  /api/v1/website/website_members/trash/bulk:
     delete:
       tags:
         - WebsiteMembers
