@@ -12,7 +12,7 @@ use sqlx::PgPool;
 use tracing::info;
 
 use super::website_error::WebsiteError;
-use super::website_service::{record_audit, ActorRef};
+use super::website_service::{record_audit_on_pool, record_audit, ActorRef};
 
 /// The GC verb's progress report.
 #[derive(Debug, Clone, Copy, Default, serde::Serialize)]
@@ -73,7 +73,7 @@ pub async fn sweep_partnerless_visitors(
         );
     }
     if summary.swept > 0 {
-        record_audit(
+        record_audit_on_pool(
             pool,
             "visitor_gc_swept",
             ActorRef::system(),

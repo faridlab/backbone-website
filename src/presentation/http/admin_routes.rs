@@ -433,7 +433,7 @@ async fn patch_page(
     for field in PUBLISH_FENCED_FIELDS {
         if raw.get(*field).is_some() {
             let refusal = WebsiteError::FieldNotPatchable { field, verb: "publish/unpublish" };
-            let _ = crate::application::service::website_service::record_audit(
+            let _ = crate::application::service::website_service::record_audit_on_pool(
                 &state.pool,
                 "publish_refused",
                 actor,
@@ -847,7 +847,7 @@ async fn sweep_visitors(
         .unwrap_or(DEFAULT_GC_BATCH);
     match sweep_partnerless_visitors(&state.pool, retention, batch).await {
         Ok(summary) => {
-            let _ = crate::application::service::website_service::record_audit(
+            let _ = crate::application::service::website_service::record_audit_on_pool(
                 &state.pool,
                 "visitor_gc_swept",
                 actor,

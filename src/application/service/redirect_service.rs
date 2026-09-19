@@ -27,7 +27,7 @@ pub type RedirectService = GenericCrudService<
 
 use super::lang_matcher::RedirectAnswer as MatcherRedirectAnswer;
 use super::website_error::WebsiteError;
-use super::website_service::{record_audit, ActorRef};
+use super::website_service::{record_audit_on_pool, record_audit, ActorRef};
 
 /// The closed redirect-type vocabulary.
 pub const REDIRECT_TYPES: &[&str] = &["moved_301", "found_302", "alias_308", "gone_404"];
@@ -158,7 +158,7 @@ impl RedirectAdminService {
         .fetch_one(&self.pool)
         .await
         .map_err(super::website_error::map_unique_violation)?;
-        record_audit(
+        record_audit_on_pool(
             &self.pool,
             "redirect_created",
             actor,
@@ -242,7 +242,7 @@ impl RedirectAdminService {
             .fetch_one(&self.pool)
             .await
             .map_err(super::website_error::map_unique_violation)?;
-        record_audit(
+        record_audit_on_pool(
             &self.pool,
             "redirect_updated",
             actor,

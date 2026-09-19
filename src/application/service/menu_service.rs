@@ -26,7 +26,7 @@ pub type MenuService = GenericCrudService<
 
 use super::page_service::tier_passes;
 use super::website_error::WebsiteError;
-use super::website_service::{record_audit, ActorRef};
+use super::website_service::{record_audit_on_pool, record_audit, ActorRef};
 
 /// The depth ceiling: at most two levels below the root node.
 pub const MENU_MAX_DEPTH: i32 = 2;
@@ -214,7 +214,7 @@ impl MenuAdminService {
         .fetch_one(&self.pool)
         .await
         .map_err(super::website_error::map_unique_violation)?;
-        record_audit(
+        record_audit_on_pool(
             &self.pool,
             "menu_created",
             actor,
@@ -323,7 +323,7 @@ impl MenuAdminService {
             .fetch_one(&self.pool)
             .await
             .map_err(super::website_error::map_unique_violation)?;
-        record_audit(
+        record_audit_on_pool(
             &self.pool,
             "menu_updated",
             actor,

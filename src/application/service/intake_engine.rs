@@ -33,7 +33,7 @@ use uuid::Uuid;
 
 use super::notifier_port::IntakeNotifier;
 use super::website_error::WebsiteError;
-use super::website_service::{record_audit, ActorRef, WebsiteView};
+use super::website_service::{record_audit_on_pool, record_audit, ActorRef, WebsiteView};
 
 /// One declared intake verb. Downstream consumers (blog comments, lead
 /// capture, event registration funnels) declare their own
@@ -332,7 +332,7 @@ impl IntakeEngine {
         if D::REQUIRES_TURNSTILE {
             let token = ctx.turnstile_token.unwrap_or("");
             if let Err(e) = self.captcha.verify(token).await {
-                record_audit(
+                record_audit_on_pool(
                     &self.pool,
                     "intake_refused",
                     ActorRef::system(),
@@ -349,7 +349,7 @@ impl IntakeEngine {
 
         // 3. Tier B books.
         if let Err(e) = self.arm_rate_buckets(D::NAME, IntakeRatePolicy::of::<D>(), ctx) {
-            record_audit(
+            record_audit_on_pool(
                 &self.pool,
                 "intake_refused",
                 ActorRef::system(),
@@ -363,7 +363,7 @@ impl IntakeEngine {
 
         // Typed validation.
         if let Err(e) = D::validate(&payload).await {
-            record_audit(
+            record_audit_on_pool(
                 &self.pool,
                 "intake_refused",
                 ActorRef::system(),
@@ -392,7 +392,7 @@ impl IntakeEngine {
                     .execute(&mut *tx)
                     .await;
                 let _ = tx.rollback().await;
-                record_audit(
+                record_audit_on_pool(
                     &self.pool,
                     "intake_refused",
                     ActorRef::system(),
@@ -409,7 +409,7 @@ impl IntakeEngine {
             .await?;
         tx.commit().await?;
 
-        record_audit(
+        record_audit_on_pool(
             &self.pool,
             "intake_received",
             ActorRef::system(),

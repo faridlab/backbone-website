@@ -26,7 +26,7 @@ pub type PageService = GenericCrudService<
 
 use super::specificity::{resolve_page_by_url, resolve_sitemap_page, Resolution, ResolvedPage};
 use super::website_error::WebsiteError;
-use super::website_service::{record_audit, ActorRef};
+use super::website_service::{record_audit_on_pool, record_audit, ActorRef};
 
 /// Fields NO generic patch may carry — the publish verbs are the only
 /// writers (`website_field_not_patchable` names the verb to use).
@@ -204,7 +204,7 @@ impl PageAdminService {
         .await
         .map_err(super::website_error::map_unique_violation)?;
 
-        record_audit(
+        record_audit_on_pool(
             &self.pool,
             "page_created",
             actor,
@@ -306,7 +306,7 @@ impl PageAdminService {
             .fetch_one(&self.pool)
             .await
             .map_err(super::website_error::map_unique_violation)?;
-        record_audit(
+        record_audit_on_pool(
             &self.pool,
             "page_updated",
             actor,

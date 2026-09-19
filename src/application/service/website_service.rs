@@ -641,3 +641,33 @@ mod tests {
         assert_eq!(normalize_host("::1"), "::1");
     }
 }
+
+/// Stamp one audit row from a verb that holds a pool rather than a transaction.
+///
+/// The shared trail is org-fenced and its guard is a BEFORE INSERT trigger, so
+/// it fires before anything else: a row written on a connection carrying no
+/// scope has no unit, is refused, and the refusal rolls back the business write
+/// that triggered the audit. A bare `pool` acquire is always such a connection,
+/// because the request's scope was opened on a different one.
+///
+/// So this opens a short transaction and relays the caller's ambient scope onto
+/// it. The transaction is required rather than incidental: the scope binder
+/// sets its variables LOCAL, and outside a transaction they are gone before the
+/// next statement runs. Outside any request scope nothing is bound and the
+/// write behaves exactly as it did before.
+pub async fn record_audit_on_pool(
+    pool: &sqlx::PgPool,
+    event: &str,
+    actor: ActorRef,
+    subject_type: Option<&str>,
+    subject_id: Option<Uuid>,
+    detail: Option<serde_json::Value>,
+) -> Result<(), WebsiteError> {
+    let mut tx = pool.begin().await?;
+    if let Some(scope) = backbone_orm::org_scope::current_org_scope() {
+        backbone_orm::org_scope::bind_org_scope_on(&mut tx, &scope).await?;
+    }
+    record_audit(&mut *tx, event, actor, subject_type, subject_id, detail).await?;
+    tx.commit().await?;
+    Ok(())
+}
