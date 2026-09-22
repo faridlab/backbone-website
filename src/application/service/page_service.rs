@@ -179,6 +179,11 @@ impl PageAdminService {
         }
         validate_url(&input.url)?;
         validate_visibility(&input.visibility)?;
+        // The plain-pool write law: a module-owned transaction relays the
+        // ambient org scope so the fence (once declared) sees the caller's
+        // entitlements; a no-op while no scope is open.
+        let mut tx = self.pool.begin().await?;
+        crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let page = sqlx::query_as::<_, Page>(
             r#"
             INSERT INTO website.pages
@@ -200,9 +205,10 @@ impl PageAdminService {
         .bind(&input.visibility)
         .bind(&input.required_member_roles)
         .bind(actor.stamp())
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *tx)
         .await
         .map_err(super::website_error::map_unique_violation)?;
+        tx.commit().await?;
 
         record_audit_on_pool(
             &self.pool,
@@ -227,15 +233,17 @@ impl PageAdminService {
     /// All raw rows for a key (officer provenance sight: the generic
     /// and every specific together).
     pub async fn rows_for_key(&self, key: &str) -> Result<Vec<Page>, WebsiteError> {
-        let rows = sqlx::query_as::<_, Page>(
-            r#"
-            SELECT * FROM website.pages
-            WHERE key = $1 AND (metadata->>'deleted_at') IS NULL
-            ORDER BY website_id NULLS LAST
-            "#,
+        let rows = backbone_orm::company_scope::fetch_all_scoped(
+            &self.pool,
+            sqlx::query_as::<_, Page>(
+                r#"
+                SELECT * FROM website.pages
+                WHERE key = $1 AND (metadata->>'deleted_at') IS NULL
+                ORDER BY website_id NULLS LAST
+                "#,
+            )
+            .bind(key),
         )
-        .bind(key)
-        .fetch_all(&self.pool)
         .await?;
         Ok(rows)
     }
@@ -301,11 +309,14 @@ impl PageAdminService {
         qb.push(")");
         qb.push(" WHERE id = ").push_bind(id);
         qb.push(" AND (metadata->>'deleted_at') IS NULL RETURNING *");
+        let mut tx = self.pool.begin().await?;
+        crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let page = qb
             .build_query_as::<Page>()
-            .fetch_one(&self.pool)
+            .fetch_one(&mut *tx)
             .await
             .map_err(super::website_error::map_unique_violation)?;
+        tx.commit().await?;
         record_audit_on_pool(
             &self.pool,
             "page_updated",
@@ -322,6 +333,8 @@ impl PageAdminService {
     /// stays lazily at its first publish instant. Audits
     /// `page_published`.
     pub async fn publish(&self, actor: ActorRef, id: Uuid) -> Result<Page, WebsiteError> {
+        let mut tx = self.pool.begin().await?;
+        crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let page = sqlx::query_as::<_, Page>(
             r#"
             UPDATE website.pages
@@ -333,10 +346,11 @@ impl PageAdminService {
             "#,
         )
         .bind(id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *tx)
         .await?
         .ok_or_else(|| WebsiteError::NotFound(format!("page {id}")))?;
-        record_audit(&self.pool, "page_published", actor, Some("page"), Some(id), None).await?;
+        record_audit(&mut *tx, "page_published", actor, Some("page"), Some(id), None).await?;
+        tx.commit().await?;
         Ok(page)
     }
 
@@ -344,6 +358,8 @@ impl PageAdminService {
     /// kept (the first-publish instant is history). Audits
     /// `page_unpublished`.
     pub async fn unpublish(&self, actor: ActorRef, id: Uuid) -> Result<Page, WebsiteError> {
+        let mut tx = self.pool.begin().await?;
+        crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let page = sqlx::query_as::<_, Page>(
             r#"
             UPDATE website.pages
@@ -354,10 +370,11 @@ impl PageAdminService {
             "#,
         )
         .bind(id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *tx)
         .await?
         .ok_or_else(|| WebsiteError::NotFound(format!("page {id}")))?;
-        record_audit(&self.pool, "page_unpublished", actor, Some("page"), Some(id), None).await?;
+        record_audit(&mut *tx, "page_unpublished", actor, Some("page"), Some(id), None).await?;
+        tx.commit().await?;
         Ok(page)
     }
 
@@ -374,6 +391,7 @@ impl PageAdminService {
     ) -> Result<Page, WebsiteError> {
         validate_url(&new_url)?;
         let mut tx = self.pool.begin().await?;
+        crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let old: Option<(String, Option<Uuid>, String)> = sqlx::query_as(
             r#"
             SELECT url, website_id,
@@ -506,6 +524,7 @@ impl PageAdminService {
     /// REFUSES: the fanout verb is the only generic deletion.
     pub async fn delete_specific(&self, actor: ActorRef, id: Uuid) -> Result<(), WebsiteError> {
         let mut tx = self.pool.begin().await?;
+        crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let row: Option<(String, Option<Uuid>)> = sqlx::query_as(
             "SELECT key, website_id FROM website.pages WHERE id = $1 \
              AND (metadata->>'deleted_at') IS NULL",
@@ -573,16 +592,18 @@ impl PageAdminService {
     /// Ordered blocks of a page (admin read; also the public read's
     /// block arm).
     pub async fn page_blocks(&self, page_id: Uuid) -> Result<Vec<BlockView>, WebsiteError> {
-        let blocks = sqlx::query_as::<_, BlockView>(
-            r#"
-            SELECT kind::text AS kind, position, payload
-            FROM website.page_blocks
-            WHERE page_id = $1
-            ORDER BY position
-            "#,
+        let blocks = backbone_orm::company_scope::fetch_all_scoped(
+            &self.pool,
+            sqlx::query_as::<_, BlockView>(
+                r#"
+                SELECT kind::text AS kind, position, payload
+                FROM website.page_blocks
+                WHERE page_id = $1
+                ORDER BY position
+                "#,
+            )
+            .bind(page_id),
         )
-        .bind(page_id)
-        .fetch_all(&self.pool)
         .await?;
         Ok(blocks)
     }
@@ -598,6 +619,13 @@ impl PageAdminService {
         url: &str,
         principal: Option<Uuid>,
     ) -> Result<Option<PublicPage>, WebsiteError> {
+        // The public read deliberately rides the shared executor-based
+        // resolvers (`specificity.rs`, `tier_passes`) on the bare pool:
+        // they are the same helpers the relayed transactions call with
+        // `&mut *tx`, so they keep their executor signatures; the
+        // anonymous storefront read carries no ambient org scope, and a
+        // scoped caller inherits the fence through the resolver's
+        // keyed lookups, never an enumeration.
         let resolution = resolve_page_by_url(&self.pool, url, website_id).await?;
         let row = match resolution {
             Resolution::None => return Ok(None),
