@@ -981,18 +981,20 @@ async fn list_contact_messages(
     Query(q): Query<ContactMessageListQuery>,
 ) -> Response {
     let rows: Vec<(Uuid, Option<String>, String, String, bool, chrono::DateTime<chrono::Utc>)> =
-        match sqlx::query_as(
-            r#"
-            SELECT id, name, email, message, notified,
-                   ((metadata->>'created_at')::timestamptz)
-            FROM website.contact_messages
-            WHERE website_id = $1
-            ORDER BY (metadata->>'created_at') DESC
-            LIMIT 200
-            "#,
+        match backbone_orm::company_scope::fetch_all_scoped(
+            &state.pool,
+            sqlx::query_as(
+                r#"
+                SELECT id, name, email, message, notified,
+                       ((metadata->>'created_at')::timestamptz)
+                FROM website.contact_messages
+                WHERE website_id = $1
+                ORDER BY (metadata->>'created_at') DESC
+                LIMIT 200
+                "#,
+            )
+            .bind(q.website_id),
         )
-        .bind(q.website_id)
-        .fetch_all(&state.pool)
         .await
         {
             Ok(r) => r,
