@@ -190,6 +190,11 @@ impl VisitorEngine {
         let url = url.unwrap_or("");
         let page_id = page_id.filter(|_| with_track);
 
+        // The plain-pool write law: the one-statement heartbeat rides a
+        // module-owned transaction that relays the ambient org scope (a
+        // no-op on the anonymous public path, where no scope is open).
+        let mut tx = self.pool.begin().await?;
+        crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let (visitor_id, inserted, token, kind, tracks): (Uuid, bool, String, String, i64) =
             sqlx::query_as(
                 r#"
@@ -225,9 +230,10 @@ impl VisitorEngine {
             .bind(url)
             .bind(with_track)
             .bind(TRACK_DEDUP_MINUTES as i32)
-            .fetch_one(&self.pool)
+            .fetch_one(&mut *tx)
             .await
             .map_err(super::website_error::map_unique_violation)?;
+        tx.commit().await?;
 
         Ok(HeartbeatOutcome {
             visitor_id,
@@ -256,6 +262,7 @@ impl VisitorEngine {
         portal_user_id: Uuid,
     ) -> Result<VisitorView, WebsiteError> {
         let mut tx = self.pool.begin().await?;
+        crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
 
         // The identified row, if one exists (lock-skip: a concurrent
         // merge for the same principal may already hold it).
@@ -342,18 +349,20 @@ impl VisitorEngine {
 
     /// Officer list for one website (digest never leaves the store).
     pub async fn list(&self, website_id: Uuid) -> Result<Vec<VisitorView>, WebsiteError> {
-        let rows = sqlx::query_as::<_, VisitorView>(
-            r#"
-            SELECT id, website_id, kind::text, digest_algo, portal_user_id,
-                   country_code, visit_count, last_connection_at
-            FROM website.visitors
-            WHERE website_id = $1
-            ORDER BY last_connection_at DESC
-            LIMIT 500
-            "#,
+        let rows = backbone_orm::company_scope::fetch_all_scoped(
+            &self.pool,
+            sqlx::query_as::<_, VisitorView>(
+                r#"
+                SELECT id, website_id, kind::text, digest_algo, portal_user_id,
+                       country_code, visit_count, last_connection_at
+                FROM website.visitors
+                WHERE website_id = $1
+                ORDER BY last_connection_at DESC
+                LIMIT 500
+                "#,
+            )
+            .bind(website_id),
         )
-        .bind(website_id)
-        .fetch_all(&self.pool)
         .await?;
         Ok(rows)
     }
@@ -361,16 +370,18 @@ impl VisitorEngine {
     /// Officer read: the "currently connected" count, derived at read
     /// (last connection within the connected window).
     pub async fn connected_count(&self, website_id: Uuid) -> Result<i64, WebsiteError> {
-        let (n,): (i64,) = sqlx::query_as(
-            r#"
-            SELECT COUNT(*) FROM website.visitors
-            WHERE website_id = $1
-              AND last_connection_at > now() - make_interval(mins => $2)
-            "#,
+        let (n,): (i64,) = backbone_orm::company_scope::fetch_one_scoped(
+            &self.pool,
+            sqlx::query_as(
+                r#"
+                SELECT COUNT(*) FROM website.visitors
+                WHERE website_id = $1
+                  AND last_connection_at > now() - make_interval(mins => $2)
+                "#,
+            )
+            .bind(website_id)
+            .bind(CONNECTED_WINDOW_MINUTES as i32),
         )
-        .bind(website_id)
-        .bind(CONNECTED_WINDOW_MINUTES as i32)
-        .fetch_one(&self.pool)
         .await?;
         Ok(n)
     }
