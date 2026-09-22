@@ -139,6 +139,11 @@ impl RedirectAdminService {
     /// `redirect_created`.
     pub async fn create(&self, actor: ActorRef, input: CreateRedirectInput) -> Result<Redirect, WebsiteError> {
         validate_redirect(&input.redirect_type, &input.url_from, &input.url_to)?;
+        // The plain-pool write law: a module-owned transaction relays the
+        // ambient org scope so the fence (once declared) sees the caller's
+        // entitlements; a no-op while no scope is open.
+        let mut tx = self.pool.begin().await?;
+        crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let row = sqlx::query_as::<_, Redirect>(
             r#"
             INSERT INTO website.redirects
@@ -155,9 +160,10 @@ impl RedirectAdminService {
         .bind(input.url_to)
         .bind(input.description)
         .bind(actor.stamp())
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *tx)
         .await
         .map_err(super::website_error::map_unique_violation)?;
+        tx.commit().await?;
         record_audit_on_pool(
             &self.pool,
             "redirect_created",
@@ -180,12 +186,14 @@ impl RedirectAdminService {
                 "the redirect patch sets no field".into(),
             ));
         }
-        let current: Option<Redirect> = sqlx::query_as::<_, Redirect>(
-            "SELECT * FROM website.redirects WHERE id = $1 \
-             AND (metadata->>'deleted_at') IS NULL",
+        let current: Option<Redirect> = backbone_orm::company_scope::fetch_optional_scoped(
+            &self.pool,
+            sqlx::query_as::<_, Redirect>(
+                "SELECT * FROM website.redirects WHERE id = $1 \
+                 AND (metadata->>'deleted_at') IS NULL",
+            )
+            .bind(id),
         )
-        .bind(id)
-        .fetch_optional(&self.pool)
         .await?;
         let Some(current) = current else {
             return Err(WebsiteError::NotFound(format!("redirect {id}")));
@@ -237,11 +245,14 @@ impl RedirectAdminService {
         qb.push(")");
         qb.push(" WHERE id = ").push_bind(id);
         qb.push(" AND (metadata->>'deleted_at') IS NULL RETURNING *");
+        let mut tx = self.pool.begin().await?;
+        crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let row = qb
             .build_query_as::<Redirect>()
-            .fetch_one(&self.pool)
+            .fetch_one(&mut *tx)
             .await
             .map_err(super::website_error::map_unique_violation)?;
+        tx.commit().await?;
         record_audit_on_pool(
             &self.pool,
             "redirect_updated",
@@ -256,12 +267,14 @@ impl RedirectAdminService {
 
     /// Officer delete. Audits `redirect_deleted`.
     pub async fn delete(&self, actor: ActorRef, id: Uuid) -> Result<(), WebsiteError> {
+        let mut tx = self.pool.begin().await?;
+        crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let existing: Option<Uuid> = sqlx::query_scalar(
             "SELECT id FROM website.redirects WHERE id = $1 \
              AND (metadata->>'deleted_at') IS NULL",
         )
         .bind(id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *tx)
         .await?;
         if existing.is_none() {
             return Err(WebsiteError::NotFound(format!("redirect {id}")));
@@ -276,23 +289,26 @@ impl RedirectAdminService {
         )
         .bind(id)
         .bind(actor.stamp())
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await?;
-        record_audit(&self.pool, "redirect_deleted", actor, Some("redirect"), Some(id), None).await?;
+        record_audit(&mut *tx, "redirect_deleted", actor, Some("redirect"), Some(id), None).await?;
+        tx.commit().await?;
         Ok(())
     }
 
     /// Officer list for one website.
     pub async fn list(&self, website_id: Uuid) -> Result<Vec<Redirect>, WebsiteError> {
-        let rows = sqlx::query_as::<_, Redirect>(
-            r#"
-            SELECT * FROM website.redirects
-            WHERE website_id = $1 AND (metadata->>'deleted_at') IS NULL
-            ORDER BY url_from
-            "#,
+        let rows = backbone_orm::company_scope::fetch_all_scoped(
+            &self.pool,
+            sqlx::query_as::<_, Redirect>(
+                r#"
+                SELECT * FROM website.redirects
+                WHERE website_id = $1 AND (metadata->>'deleted_at') IS NULL
+                ORDER BY url_from
+                "#,
+            )
+            .bind(website_id),
         )
-        .bind(website_id)
-        .fetch_all(&self.pool)
         .await?;
         Ok(rows)
     }
@@ -300,17 +316,19 @@ impl RedirectAdminService {
     /// The routing-table answer for one path on one website — the
     /// matcher's case-7 input. Fresh read, no cache.
     pub async fn answer(&self, website_id: Uuid, url: &str) -> Result<Option<MatcherRedirectAnswer>, WebsiteError> {
-        let row = sqlx::query_as::<_, (String, Option<String>)>(
-            r#"
-            SELECT redirect_type::text, url_to
-            FROM website.redirects
-            WHERE website_id = $1 AND url_from = $2
-              AND (metadata->>'deleted_at') IS NULL
-            "#,
+        let row = backbone_orm::company_scope::fetch_optional_scoped(
+            &self.pool,
+            sqlx::query_as::<_, (String, Option<String>)>(
+                r#"
+                SELECT redirect_type::text, url_to
+                FROM website.redirects
+                WHERE website_id = $1 AND url_from = $2
+                  AND (metadata->>'deleted_at') IS NULL
+                "#,
+            )
+            .bind(website_id)
+            .bind(url),
         )
-        .bind(website_id)
-        .bind(url)
-        .fetch_optional(&self.pool)
         .await?;
         Ok(row.map(|(redirect_type, url_to)| MatcherRedirectAnswer { redirect_type, url_to }))
     }
@@ -326,6 +344,8 @@ impl RedirectAdminService {
     ) -> Result<(), WebsiteError> {
         let target = if kind == "gone_404" { None } else { Some(url_to.to_string()) };
         validate_redirect(kind, url_from, &target)?;
+        let mut tx = self.pool.begin().await?;
+        crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         sqlx::query(
             r#"
             INSERT INTO website.redirects
@@ -339,8 +359,9 @@ impl RedirectAdminService {
         .bind(url_from)
         .bind(kind)
         .bind(target)
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await?;
+        tx.commit().await?;
         Ok(())
     }
 }
