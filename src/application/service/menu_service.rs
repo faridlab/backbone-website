@@ -179,11 +179,17 @@ impl MenuAdminService {
         if input.name.trim().is_empty() {
             return Err(WebsiteError::InvalidInput("menu name is required".into()));
         }
+        // The plain-pool write law: a module-owned transaction relays the
+        // ambient org scope so the fence (once declared) sees the caller's
+        // entitlements; a no-op while no scope is open. The depth
+        // validation rides the same transaction so its read is fenced too.
+        let mut tx = self.pool.begin().await?;
+        crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         if let Some(parent) = input.parent_id {
             if input.is_mega_menu {
                 return Err(WebsiteError::MegaMenuIsolated);
             }
-            let parent_depth = Self::depth_of(&self.pool, parent).await?;
+            let parent_depth = Self::depth_of(&mut *tx, parent).await?;
             if parent_depth + 1 > MENU_MAX_DEPTH {
                 return Err(WebsiteError::MenuDepthExceeded);
             }
@@ -211,9 +217,10 @@ impl MenuAdminService {
         .bind(&input.required_member_roles)
         .bind(input.is_mega_menu)
         .bind(actor.stamp())
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *tx)
         .await
         .map_err(super::website_error::map_unique_violation)?;
+        tx.commit().await?;
         record_audit_on_pool(
             &self.pool,
             "menu_created",
@@ -236,12 +243,14 @@ impl MenuAdminService {
                 "the menu patch sets no field".into(),
             ));
         }
+        let mut tx = self.pool.begin().await?;
+        crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let current: Option<Menu> = sqlx::query_as::<_, Menu>(
             "SELECT * FROM website.menus WHERE id = $1 \
              AND (metadata->>'deleted_at') IS NULL",
         )
         .bind(id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *tx)
         .await?;
         let Some(current) = current else {
             return Err(WebsiteError::NotFound(format!("menu {id}")));
@@ -259,7 +268,7 @@ impl MenuAdminService {
                         "a menu cannot be its own parent".into(),
                     ));
                 }
-                Self::depth_of(&self.pool, p).await? + 1
+                Self::depth_of(&mut *tx, p).await? + 1
             }
             None => 0,
         };
@@ -272,7 +281,7 @@ impl MenuAdminService {
             if will_parent.is_some() {
                 return Err(WebsiteError::MegaMenuIsolated);
             }
-            if Self::node_children_count(&self.pool, id).await? > 0 {
+            if Self::node_children_count(&mut *tx, id).await? > 0 {
                 return Err(WebsiteError::MegaMenuIsolated);
             }
         }
@@ -320,9 +329,10 @@ impl MenuAdminService {
         qb.push(" AND (metadata->>'deleted_at') IS NULL RETURNING *");
         let menu = qb
             .build_query_as::<Menu>()
-            .fetch_one(&self.pool)
+            .fetch_one(&mut *tx)
             .await
             .map_err(super::website_error::map_unique_violation)?;
+        tx.commit().await?;
         record_audit_on_pool(
             &self.pool,
             "menu_updated",
@@ -338,12 +348,14 @@ impl MenuAdminService {
     /// LOCAL-only delete (its website, nothing else — the upstream
     /// cross-website cascade is not ported). Audits `menu_deleted`.
     pub async fn delete_menu(&self, actor: ActorRef, id: Uuid) -> Result<(), WebsiteError> {
+        let mut tx = self.pool.begin().await?;
+        crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let row: Option<Uuid> = sqlx::query_scalar(
             "SELECT id FROM website.menus WHERE id = $1 \
              AND (metadata->>'deleted_at') IS NULL",
         )
         .bind(id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *tx)
         .await?;
         if row.is_none() {
             return Err(WebsiteError::NotFound(format!("menu {id}")));
@@ -358,9 +370,10 @@ impl MenuAdminService {
         )
         .bind(id)
         .bind(actor.stamp())
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await?;
-        record_audit(&self.pool, "menu_deleted", actor, Some("menu"), Some(id), None).await?;
+        record_audit(&mut *tx, "menu_deleted", actor, Some("menu"), Some(id), None).await?;
+        tx.commit().await?;
         Ok(())
     }
 
@@ -371,6 +384,7 @@ impl MenuAdminService {
     /// included. Audits `menu_fanout`. Returns the created-id list.
     pub async fn fanout_menu(&self, actor: ActorRef, id: Uuid) -> Result<Vec<Uuid>, WebsiteError> {
         let mut tx = self.pool.begin().await?;
+        crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let source: Option<Menu> = sqlx::query_as::<_, Menu>(
             "SELECT * FROM website.menus WHERE id = $1 \
              AND (metadata->>'deleted_at') IS NULL",
@@ -496,15 +510,17 @@ impl MenuAdminService {
 
     /// The officer tree (admin read, everything).
     pub async fn tree_admin(&self, website_id: Uuid) -> Result<Vec<MenuNode>, WebsiteError> {
-        let rows = sqlx::query_as::<_, Menu>(
-            r#"
-            SELECT * FROM website.menus
-            WHERE website_id = $1 AND (metadata->>'deleted_at') IS NULL
-            ORDER BY parent_id NULLS FIRST, sequence, id
-            "#,
+        let rows = backbone_orm::company_scope::fetch_all_scoped(
+            &self.pool,
+            sqlx::query_as::<_, Menu>(
+                r#"
+                SELECT * FROM website.menus
+                WHERE website_id = $1 AND (metadata->>'deleted_at') IS NULL
+                ORDER BY parent_id NULLS FIRST, sequence, id
+                "#,
+            )
+            .bind(website_id),
         )
-        .bind(website_id)
-        .fetch_all(&self.pool)
         .await?;
         Ok(build_tree(rows))
     }
@@ -517,18 +533,23 @@ impl MenuAdminService {
         website_id: Uuid,
         principal: Option<Uuid>,
     ) -> Result<Vec<MenuNode>, WebsiteError> {
-        let rows = sqlx::query_as::<_, Menu>(
-            r#"
-            SELECT * FROM website.menus
-            WHERE website_id = $1 AND (metadata->>'deleted_at') IS NULL
-            ORDER BY parent_id NULLS FIRST, sequence, id
-            "#,
+        let rows = backbone_orm::company_scope::fetch_all_scoped(
+            &self.pool,
+            sqlx::query_as::<_, Menu>(
+                r#"
+                SELECT * FROM website.menus
+                WHERE website_id = $1 AND (metadata->>'deleted_at') IS NULL
+                ORDER BY parent_id NULLS FIRST, sequence, id
+                "#,
+            )
+            .bind(website_id),
         )
-        .bind(website_id)
-        .fetch_all(&self.pool)
         .await?;
         let mut visible = Vec::with_capacity(rows.len());
         for m in rows {
+            // The shared tier predicate keeps its executor signature (it
+            // also runs inside relayed transactions); on the anonymous
+            // public tree read it carries no ambient scope by design.
             if tier_passes(
                 &self.pool,
                 &m.visibility.to_string(),
@@ -577,22 +598,24 @@ impl MenuAdminService {
         // The anchor row (a parent outside this website is the closed
         // 404 — no cross-website oracle).
         let anchor = if let Some(parent_id) = parent {
-            let row = sqlx::query_as::<_, HierarchyNode>(
-                r#"
-                SELECT m.id, m.parent_id, m.name, m.page_id, m.url, m.new_window,
-                       m.sequence, m.visibility::text AS visibility,
-                       m.required_member_roles, m.is_mega_menu,
-                       (SELECT count(*) FROM website.menus gc
-                        WHERE gc.parent_id = m.id
-                          AND (gc.metadata->>'deleted_at') IS NULL) AS child_count
-                FROM website.menus m
-                WHERE m.id = $1 AND m.website_id = $2
-                  AND (m.metadata->>'deleted_at') IS NULL
-                "#,
+            let row = backbone_orm::company_scope::fetch_optional_scoped(
+                &self.pool,
+                sqlx::query_as::<_, HierarchyNode>(
+                    r#"
+                    SELECT m.id, m.parent_id, m.name, m.page_id, m.url, m.new_window,
+                           m.sequence, m.visibility::text AS visibility,
+                           m.required_member_roles, m.is_mega_menu,
+                           (SELECT count(*) FROM website.menus gc
+                            WHERE gc.parent_id = m.id
+                              AND (gc.metadata->>'deleted_at') IS NULL) AS child_count
+                    FROM website.menus m
+                    WHERE m.id = $1 AND m.website_id = $2
+                      AND (m.metadata->>'deleted_at') IS NULL
+                    "#,
+                )
+                .bind(parent_id)
+                .bind(website_id),
             )
-            .bind(parent_id)
-            .bind(website_id)
-            .fetch_optional(&self.pool)
             .await?;
             match row {
                 Some(a) => Some(a),
@@ -607,12 +630,14 @@ impl MenuAdminService {
         };
         // One level below the anchor (or the roots), limit+1 fetched so
         // truncation is observable without a second count query.
-        let mut rows = sqlx::query_as::<_, HierarchyNode>(
-            r#"
-            SELECT m.id, m.parent_id, m.name, m.page_id, m.url, m.new_window,
-                   m.sequence, m.visibility::text AS visibility,
-                   m.required_member_roles, m.is_mega_menu,
-                   (SELECT count(*) FROM website.menus gc
+        let mut rows = backbone_orm::company_scope::fetch_all_scoped(
+            &self.pool,
+            sqlx::query_as::<_, HierarchyNode>(
+                r#"
+                SELECT m.id, m.parent_id, m.name, m.page_id, m.url, m.new_window,
+                       m.sequence, m.visibility::text AS visibility,
+                       m.required_member_roles, m.is_mega_menu,
+                       (SELECT count(*) FROM website.menus gc
                     WHERE gc.parent_id = m.id
                       AND (gc.metadata->>'deleted_at') IS NULL) AS child_count
             FROM website.menus m
@@ -622,11 +647,11 @@ impl MenuAdminService {
             ORDER BY m.sequence, m.id
             LIMIT $3
             "#,
+            )
+            .bind(website_id)
+            .bind(parent)
+            .bind(limit + 1),
         )
-        .bind(website_id)
-        .bind(parent)
-        .bind(limit + 1)
-        .fetch_all(&self.pool)
         .await?;
         let truncated = rows.len() as i64 > limit;
         if truncated {
@@ -645,16 +670,18 @@ impl MenuAdminService {
         &self,
         menu_id: Uuid,
     ) -> Result<Vec<super::page_service::BlockView>, WebsiteError> {
-        let blocks = sqlx::query_as::<_, super::page_service::BlockView>(
-            r#"
-            SELECT kind::text AS kind, position, payload
-            FROM website.menu_blocks
-            WHERE menu_id = $1
-            ORDER BY position
-            "#,
+        let blocks = backbone_orm::company_scope::fetch_all_scoped(
+            &self.pool,
+            sqlx::query_as::<_, super::page_service::BlockView>(
+                r#"
+                SELECT kind::text AS kind, position, payload
+                FROM website.menu_blocks
+                WHERE menu_id = $1
+                ORDER BY position
+                "#,
+            )
+            .bind(menu_id),
         )
-        .bind(menu_id)
-        .fetch_all(&self.pool)
         .await?;
         Ok(blocks)
     }
