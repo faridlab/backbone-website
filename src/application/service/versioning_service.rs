@@ -126,6 +126,10 @@ pub async fn fork_to_website(
     target_website: Uuid,
 ) -> Result<ForkOutcome, WebsiteError> {
     let mut tx = pool.begin().await?;
+    // The plain-pool write law: a module-owned transaction relays the
+    // ambient org scope so the fence (once declared) sees the caller's
+    // entitlements; a no-op while no scope is open.
+    crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
 
     // 1. A live specific already answers → idempotent Existing.
     if let Resolution::Specific(_) = resolve_specific(&mut *tx, key, target_website).await? {
@@ -201,6 +205,7 @@ pub async fn delete_generic_with_fanout(
     key: &str,
 ) -> Result<FanoutDeletion, WebsiteError> {
     let mut tx = pool.begin().await?;
+    crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
 
     let generic = generic_entity(&mut *tx, key)
         .await?

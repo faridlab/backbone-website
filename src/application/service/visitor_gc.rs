@@ -42,6 +42,10 @@ pub async fn sweep_partnerless_visitors(
     let mut summary = SweepSummary::default();
     loop {
         let mut tx = pool.begin().await?;
+        // The plain-pool write law: each batch transaction relays the
+        // ambient org scope (a no-op on the cron path, which runs under
+        // the system actor with no scope open).
+        crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let deleted = sqlx::query(
             r#"
             DELETE FROM website.visitors
