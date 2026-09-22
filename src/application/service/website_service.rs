@@ -618,6 +618,10 @@ impl WebsiteRootService {
         principal_user_id: Uuid,
         website_id: Uuid,
     ) -> Result<Vec<Uuid>, WebsiteError> {
+        // TENANT RESOLUTION, deliberately unscoped (the bootstrap-exemption
+        // family beside `website_by_host`): this read decides WHICH company
+        // the principal may scope to — the scope's input, not its consumer —
+        // and it reads by a globally unique key, never enumerates.
         let company = sqlx::query_scalar::<_, Option<Uuid>>(
             r#"
             SELECT
