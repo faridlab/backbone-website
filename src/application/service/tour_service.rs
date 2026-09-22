@@ -135,7 +135,12 @@ impl TourService {
             )));
         }
 
+        // The plain-pool write law: a module-owned transaction relays the
+        // ambient org scope so the fence (once declared) sees the caller's
+        // entitlements; a no-op while no scope is open. Tours themselves
+        // stay global rows (not website-scoped) by port design.
         let mut tx = self.pool.begin().await?;
+        crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let tour = sqlx::query_as::<_, TourView>(
             r#"
             INSERT INTO website.tours (name, display_name, rainbow_man_message, steps)
@@ -174,32 +179,36 @@ impl TourService {
 
     /// The live definition for one name (the engine's by-name lookup).
     pub async fn tour_by_name(&self, name: &str) -> Result<Option<TourView>, WebsiteError> {
-        let tour = sqlx::query_as::<_, TourView>(
-            r#"
-            SELECT id, name, display_name, rainbow_man_message, steps,
-                   (metadata->>'updated_at')::timestamptz AS updated_at
-            FROM website.tours
-            WHERE name = $1 AND (metadata->>'deleted_at') IS NULL
-            "#,
+        let tour = backbone_orm::company_scope::fetch_optional_scoped(
+            &self.pool,
+            sqlx::query_as::<_, TourView>(
+                r#"
+                SELECT id, name, display_name, rainbow_man_message, steps,
+                       (metadata->>'updated_at')::timestamptz AS updated_at
+                FROM website.tours
+                WHERE name = $1 AND (metadata->>'deleted_at') IS NULL
+                "#,
+            )
+            .bind(name.trim()),
         )
-        .bind(name.trim())
-        .fetch_optional(&self.pool)
         .await?;
         Ok(tour)
     }
 
     /// Every live definition, ordered by name (deterministic).
     pub async fn list_tours(&self) -> Result<Vec<TourView>, WebsiteError> {
-        let tours = sqlx::query_as::<_, TourView>(
-            r#"
-            SELECT id, name, display_name, rainbow_man_message, steps,
-                   (metadata->>'updated_at')::timestamptz AS updated_at
-            FROM website.tours
-            WHERE (metadata->>'deleted_at') IS NULL
-            ORDER BY name, id
-            "#,
+        let tours = backbone_orm::company_scope::fetch_all_scoped(
+            &self.pool,
+            sqlx::query_as::<_, TourView>(
+                r#"
+                SELECT id, name, display_name, rainbow_man_message, steps,
+                       (metadata->>'updated_at')::timestamptz AS updated_at
+                FROM website.tours
+                WHERE (metadata->>'deleted_at') IS NULL
+                ORDER BY name, id
+                "#,
+            ),
         )
-        .fetch_all(&self.pool)
         .await?;
         Ok(tours)
     }
@@ -209,6 +218,7 @@ impl TourService {
     /// rows). A missing name is the typed 404.
     pub async fn delete_tour(&self, actor: ActorRef, name: &str) -> Result<(), WebsiteError> {
         let mut tx = self.pool.begin().await?;
+        crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let deleted = sqlx::query_scalar::<_, Uuid>(
             r#"
             UPDATE website.tours
@@ -248,6 +258,7 @@ impl TourService {
         name: &str,
     ) -> Result<ConsumeOutcome, WebsiteError> {
         let mut tx = self.pool.begin().await?;
+        crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let tour: Option<(Uuid,)> = sqlx::query_as(
             r#"
             SELECT id FROM website.tours
@@ -304,17 +315,19 @@ impl TourService {
         &self,
         portal_user_id: Uuid,
     ) -> Result<Vec<ConsumedTour>, WebsiteError> {
-        let consumed = sqlx::query_as::<_, ConsumedTour>(
-            r#"
-            SELECT t.name, c.tour_id, c.consumed_at
-            FROM website.tour_consumptions c
-            JOIN website.tours t ON t.id = c.tour_id
-            WHERE c.portal_user_id = $1 AND (t.metadata->>'deleted_at') IS NULL
-            ORDER BY t.name, c.tour_id
-            "#,
+        let consumed = backbone_orm::company_scope::fetch_all_scoped(
+            &self.pool,
+            sqlx::query_as::<_, ConsumedTour>(
+                r#"
+                SELECT t.name, c.tour_id, c.consumed_at
+                FROM website.tour_consumptions c
+                JOIN website.tours t ON t.id = c.tour_id
+                WHERE c.portal_user_id = $1 AND (t.metadata->>'deleted_at') IS NULL
+                ORDER BY t.name, c.tour_id
+                "#,
+            )
+            .bind(portal_user_id),
         )
-        .bind(portal_user_id)
-        .fetch_all(&self.pool)
         .await?;
         Ok(consumed)
     }
@@ -325,6 +338,7 @@ impl TourService {
     /// of dropped facts.
     pub async fn reset_tour(&self, actor: ActorRef, name: &str) -> Result<u64, WebsiteError> {
         let mut tx = self.pool.begin().await?;
+        crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let tour: Option<(Uuid,)> = sqlx::query_as(
             r#"
             SELECT id FROM website.tours
