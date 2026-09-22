@@ -225,6 +225,10 @@ impl WebsiteRootService {
         };
 
         let mut tx = self.pool.begin().await?;
+        // The plain-pool write law: a module-owned transaction relays the
+        // ambient org scope so the fence (once declared) sees the caller's
+        // entitlements; a no-op while no scope is open.
+        crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
 
         // Mint or bind the public principal. The mint is officer-acted:
         // the ghost row exists so its declared read verbs can enumerate
@@ -416,6 +420,10 @@ impl WebsiteRootService {
     /// here; this helper deliberately carries no `resolve_` prefix so
     /// the one-resolver grep invariant stays literal.)
     pub async fn website_by_host(&self, host: &str) -> Result<WebsiteView, WebsiteError> {
+        // THE BOOTSTRAP READ, deliberately unscoped: resolving a domain to
+        // its company is what PRODUCES the request's scope, so this one
+        // lookup stays on the bare pool by design — the fence's one named
+        // exemption (it reads by a globally unique key, never enumerates).
         let normalized = normalize_host(host);
         let row = sqlx::query_as::<_, WebsiteView>(
             r#"
@@ -433,16 +441,18 @@ impl WebsiteRootService {
     }
 
     pub async fn website_by_id(&self, id: Uuid) -> Result<WebsiteView, WebsiteError> {
-        sqlx::query_as::<_, WebsiteView>(
-            r#"
-            SELECT id, name, domain, company_id, public_user_id, default_lang_code,
-                   homepage_url, robots_txt, social_links, contact_recipients, sequence
-            FROM website.websites
-            WHERE id = $1 AND (metadata->>'deleted_at') IS NULL
-            "#,
+        backbone_orm::company_scope::fetch_optional_scoped(
+            &self.pool,
+            sqlx::query_as::<_, WebsiteView>(
+                r#"
+                SELECT id, name, domain, company_id, public_user_id, default_lang_code,
+                       homepage_url, robots_txt, social_links, contact_recipients, sequence
+                FROM website.websites
+                WHERE id = $1 AND (metadata->>'deleted_at') IS NULL
+                "#,
+            )
+            .bind(id),
         )
-        .bind(id)
-        .fetch_optional(&self.pool)
         .await?
         .ok_or_else(|| WebsiteError::NotFound(format!("website {id}")))
     }
@@ -452,18 +462,20 @@ impl WebsiteRootService {
         &self,
         company_id: Option<Uuid>,
     ) -> Result<Vec<WebsiteView>, WebsiteError> {
-        sqlx::query_as::<_, WebsiteView>(
-            r#"
-            SELECT id, name, domain, company_id, public_user_id, default_lang_code,
-                   homepage_url, robots_txt, social_links, contact_recipients, sequence
-            FROM website.websites
-            WHERE (metadata->>'deleted_at') IS NULL
-              AND ($1::uuid IS NULL OR company_id = $1)
-            ORDER BY company_id, sequence, id
-            "#,
+        backbone_orm::company_scope::fetch_all_scoped(
+            &self.pool,
+            sqlx::query_as::<_, WebsiteView>(
+                r#"
+                SELECT id, name, domain, company_id, public_user_id, default_lang_code,
+                       homepage_url, robots_txt, social_links, contact_recipients, sequence
+                FROM website.websites
+                WHERE (metadata->>'deleted_at') IS NULL
+                  AND ($1::uuid IS NULL OR company_id = $1)
+                ORDER BY company_id, sequence, id
+                "#,
+            )
+            .bind(company_id),
         )
-        .bind(company_id)
-        .fetch_all(&self.pool)
         .await
         .map_err(WebsiteError::from)
     }
@@ -474,18 +486,20 @@ impl WebsiteRootService {
         &self,
         company_id: Uuid,
     ) -> Result<Option<WebsiteView>, WebsiteError> {
-        let row = sqlx::query_as::<_, WebsiteView>(
-            r#"
-            SELECT id, name, domain, company_id, public_user_id, default_lang_code,
-                   homepage_url, robots_txt, social_links, contact_recipients, sequence
-            FROM website.websites
-            WHERE company_id = $1 AND (metadata->>'deleted_at') IS NULL
-            ORDER BY sequence, id
-            LIMIT 1
-            "#,
+        let row = backbone_orm::company_scope::fetch_optional_scoped(
+            &self.pool,
+            sqlx::query_as::<_, WebsiteView>(
+                r#"
+                SELECT id, name, domain, company_id, public_user_id, default_lang_code,
+                       homepage_url, robots_txt, social_links, contact_recipients, sequence
+                FROM website.websites
+                WHERE company_id = $1 AND (metadata->>'deleted_at') IS NULL
+                ORDER BY sequence, id
+                LIMIT 1
+                "#,
+            )
+            .bind(company_id),
         )
-        .bind(company_id)
-        .fetch_optional(&self.pool)
         .await?;
         Ok(row)
     }
@@ -500,6 +514,8 @@ impl WebsiteRootService {
                 return Err(WebsiteError::WebsiteIsPrimaryForCompany);
             }
         }
+        let mut tx = self.pool.begin().await?;
+        crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         sqlx::query(
             r#"
             UPDATE website.websites
@@ -510,8 +526,9 @@ impl WebsiteRootService {
         )
         .bind(id)
         .bind(actor.stamp())
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await?;
+        tx.commit().await?;
         Ok(())
     }
 
@@ -581,11 +598,14 @@ impl WebsiteRootService {
         qb.push(" WHERE id = ").push_bind(id);
         qb.push(" RETURNING id, name, domain, company_id, public_user_id, default_lang_code, \
                  homepage_url, robots_txt, social_links, contact_recipients, sequence");
+        let mut tx = self.pool.begin().await?;
+        crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let view = qb
             .build_query_as::<WebsiteView>()
-            .fetch_one(&self.pool)
+            .fetch_one(&mut *tx)
             .await
             .map_err(super::website_error::map_unique_violation)?;
+        tx.commit().await?;
         Ok(view)
     }
 
