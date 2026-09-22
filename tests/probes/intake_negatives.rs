@@ -139,7 +139,7 @@ async fn probe_turnstile_four_answers_typed_apart() {
         .unwrap();
     assert_eq!(rows, 0, "no turnstile path may persist the message");
     let refusals: i64 = sqlx::query_scalar(
-        "SELECT count(*) FROM website.website_audit_log WHERE event = 'intake_refused'",
+        "SELECT count(*) FROM auditlog.audit_trails WHERE action = 'intake_refused'",
     )
     .fetch_one(&db.pool)
     .await
@@ -181,7 +181,7 @@ async fn probe_intake_success_unwired_notifier() {
     .unwrap();
     assert_eq!(rows, 1);
     let received: i64 = sqlx::query_scalar(
-        "SELECT count(*) FROM website.website_audit_log WHERE event = 'intake_received'",
+        "SELECT count(*) FROM auditlog.audit_trails WHERE action = 'intake_received'",
     )
     .fetch_one(&db.pool)
     .await
@@ -361,7 +361,7 @@ async fn probe_savepoint_rollback_leaves_zero_rows() {
         .unwrap();
     assert_eq!(rows, 0, "the savepoint rollback must undo the half-write");
     let refused: i64 = sqlx::query_scalar(
-        "SELECT count(*) FROM website.website_audit_log WHERE event = 'intake_refused'",
+        "SELECT count(*) FROM auditlog.audit_trails WHERE action = 'intake_refused'",
     )
     .fetch_one(&db.pool)
     .await

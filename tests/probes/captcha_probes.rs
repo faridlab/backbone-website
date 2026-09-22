@@ -150,7 +150,7 @@ async fn probe_recaptcha_four_answers_typed_apart() {
         .unwrap();
     assert_eq!(rows, 0, "no recaptcha refusal path may persist the message");
     let refusals: i64 = sqlx::query_scalar(
-        "SELECT count(*) FROM website.website_audit_log WHERE event = 'intake_refused'",
+        "SELECT count(*) FROM auditlog.audit_trails WHERE action = 'intake_refused'",
     )
     .fetch_one(&db.pool)
     .await
@@ -170,7 +170,7 @@ async fn probe_recaptcha_four_answers_typed_apart() {
         .unwrap();
     assert_eq!(rows, 1);
     let received: i64 = sqlx::query_scalar(
-        "SELECT count(*) FROM website.website_audit_log WHERE event = 'intake_received'",
+        "SELECT count(*) FROM auditlog.audit_trails WHERE action = 'intake_received'",
     )
     .fetch_one(&db.pool)
     .await
@@ -257,8 +257,8 @@ async fn probe_captcha_provider_selection() {
         .unwrap();
     assert_eq!(rows, 0, "the unknown arm persists nothing");
     let refusals: i64 = sqlx::query_scalar(
-        "SELECT count(*) FROM website.website_audit_log WHERE event = 'intake_refused' \
-         AND detail->>'code' = 'website_captcha_provider_unknown'",
+        "SELECT count(*) FROM auditlog.audit_trails WHERE action = 'intake_refused' \
+         AND changed->>'code' = 'website_captcha_provider_unknown'",
     )
     .fetch_one(&db.pool)
     .await
@@ -422,7 +422,7 @@ async fn probe_recaptcha_secret_and_token_never_surface() {
     // No audit row (whole row as JSON, case-insensitive) carries
     // either needle — the trail records the verb + code only.
     let rows: Vec<String> = sqlx::query_scalar(
-        "SELECT lower(to_jsonb(t)::text) FROM website.website_audit_log t",
+        "SELECT lower(to_jsonb(t)::text) FROM auditlog.audit_trails t",
     )
     .fetch_all(&db.pool)
     .await

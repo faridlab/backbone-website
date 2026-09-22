@@ -269,7 +269,7 @@ async fn probe_login_merge_both_arms() {
     .unwrap();
     assert_eq!(moved, 1, "the absorbed row's tracks re-parented");
     let audit: i64 = sqlx::query_scalar(
-        "SELECT count(*) FROM website.website_audit_log WHERE event = 'visitor_merged'",
+        "SELECT count(*) FROM auditlog.audit_trails WHERE action = 'visitor_merged'",
     )
     .fetch_one(&db.pool)
     .await

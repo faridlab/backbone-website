@@ -194,7 +194,7 @@ async fn probe_patch_publish_fence_via_router() {
 
     // The refusal is AUDITED (publish_refused) — one row per attempt.
     let refusals: i64 = sqlx::query_scalar(
-        "SELECT count(*) FROM website.website_audit_log WHERE event = 'publish_refused'",
+        "SELECT count(*) FROM auditlog.audit_trails WHERE action = 'publish_refused'",
     )
     .fetch_one(&db.pool)
     .await

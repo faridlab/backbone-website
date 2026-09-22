@@ -113,6 +113,9 @@ impl TestDb {
         if let Err(what) = install_portal_stub(&pool, marker).await {
             skipped(&what);
         }
+        if let Err(what) = install_auditlog_stub(&pool, marker).await {
+            skipped(&what);
+        }
         Self { pool, name, admin }
     }
 
@@ -206,6 +209,53 @@ async fn install_portal_stub(pool: &PgPool, marker: &str) -> Result<(), String> 
     "#;
     if let Err(e) = sqlx::raw_sql(stub).execute(&mut *conn).await {
         return Err(format!("PROBE-FAIL: {marker}: portal stub failed: {e}"));
+    }
+    Ok(())
+}
+
+/// The auditlog sibling the module's audit writer depends on. The website
+/// module consolidates its audit trail onto `auditlog.audit_trails`
+/// (backbone-auditlog), but the module's own probe bootstrap applies only
+/// its own migrations — without this stub every hand verb's audit write
+/// dies on the missing enum and the whole probe family goes red. Inline
+/// SQL (not a sibling-checkout read) so the module's repo stays standalone.
+async fn install_auditlog_stub(pool: &PgPool, marker: &str) -> Result<(), String> {
+    let mut conn = pool
+        .acquire()
+        .await
+        .map_err(|e| format!("PROBE-FAIL: {marker}: cannot acquire pool conn: {e}"))?;
+    let stub = r#"
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'audit_event_type') THEN
+                CREATE TYPE audit_event_type AS ENUM ('data_change', 'refusal', 'security_edge');
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'audit_status') THEN
+                CREATE TYPE audit_status AS ENUM ('success', 'failure');
+            END IF;
+        END $$;
+        CREATE SCHEMA IF NOT EXISTS auditlog;
+        CREATE TABLE IF NOT EXISTS auditlog.audit_trails (
+            id UUID NOT NULL DEFAULT gen_random_uuid(),
+            occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            event_type audit_event_type NOT NULL,
+            action TEXT NOT NULL,
+            actor TEXT NOT NULL,
+            subject_type TEXT,
+            subject_id TEXT,
+            changed JSONB,
+            reason TEXT,
+            status audit_status NOT NULL,
+            correlation_id TEXT,
+            client_ip TEXT,
+            user_agent TEXT,
+            http_method TEXT,
+            resource_path TEXT,
+            txid TEXT NOT NULL,
+            PRIMARY KEY (id)
+        );
+    "#;
+    if let Err(e) = sqlx::raw_sql(stub).execute(&mut *conn).await {
+        return Err(format!("PROBE-FAIL: {marker}: auditlog stub failed: {e}"));
     }
     Ok(())
 }
