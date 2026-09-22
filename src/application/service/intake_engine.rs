@@ -377,7 +377,11 @@ impl IntakeEngine {
 
         // 4. Per-verb savepoint; 5. the plain app role executes (no
         // sudo anywhere — the payload struct admits no identity field).
+        // The plain-pool write law: the module-owned transaction relays
+        // the ambient org scope (a no-op on the anonymous public intake
+        // path, where no scope is open).
         let mut tx = self.pool.begin().await?;
+        crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let savepoint = savepoint_ident(D::NAME);
         sqlx::query(&format!("SAVEPOINT {savepoint}"))
             .execute(&mut *tx)
@@ -429,12 +433,15 @@ impl IntakeEngine {
                 // notification by the time notify_intake resolves.
                 notified = true;
                 if let Some(id) = outcome.subject_id {
+                    let mut tx = self.pool.begin().await?;
+                    crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
                     let _ = sqlx::query(
                         "UPDATE website.contact_messages SET notified = TRUE WHERE id = $1",
                     )
                     .bind(id)
-                    .execute(&self.pool)
+                    .execute(&mut *tx)
                     .await;
+                    let _ = tx.commit().await;
                 }
             }
         }
