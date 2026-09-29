@@ -512,6 +512,29 @@ async fn visitor_heartbeat(
         Err(resp) => return resp,
     };
     let ip = visitor_ip(&headers, connect_info.map(|c| c.0), state.trusted_proxy);
+    // The per-IP heartbeat fence on the intake engine's own limiter books
+    // (one subsystem, a heartbeat-namespaced key): a churning caller can
+    // no longer mint a visitor row per (ip, user-agent, session) triple
+    // at unbounded rate. The intake per-IP budget doubles as the default
+    // — heartbeats are strictly cheaper than intakes.
+    if let Err(retry_after) = state.intake.heartbeat_rate_check(
+        website.id,
+        &ip,
+        crate::application::service::intake_engine::IntakeRatePolicy::of::<
+            crate::application::service::intake_contact::ContactIntake,
+        >()
+        .ip_limit,
+    ) {
+        return (
+            StatusCode::TOO_MANY_REQUESTS,
+            [("retry-after", retry_after.to_string())],
+            Json(serde_json::json!({
+                "error": "heartbeat_rate_limited",
+                "retryAfterSeconds": retry_after,
+            })),
+        )
+            .into_response();
+    }
     let ua = user_agent(&headers);
     let session = crate::application::service::visitor_service::SessionFacts {
         ip: &ip,

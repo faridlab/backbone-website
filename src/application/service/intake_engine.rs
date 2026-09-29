@@ -255,6 +255,19 @@ impl IntakeEngine {
         &self.pool
     }
 
+    /// One heartbeat's per-IP window bump on the SAME books and window
+    /// arithmetic the intake verbs use — one limiter subsystem, not a
+    /// second. The key carries its own namespace (heartbeat:) so a busy
+    /// intake IP cannot eat the heartbeat budget or vice versa.
+    pub fn heartbeat_rate_check(&self, website_id: uuid::Uuid, client_ip: &str, limit: u32) -> Result<(), i64> {
+        let key = format!("heartbeat:{website_id}:ip:{client_ip}");
+        let mut books = self
+            .books
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+        Self::bump(&mut books, &key, limit)
+    }
+
     fn current_hour() -> i64 {
         chrono::Utc::now().timestamp() / 3600
     }
