@@ -167,6 +167,7 @@ impl backbone_orm::EntityRepoMeta for VisitorTrack {
         m.insert("id".to_string(), "uuid".to_string());
         m.insert("visitor_id".to_string(), "uuid".to_string());
         m.insert("page_id".to_string(), "uuid".to_string());
+        m.insert("visited_at".to_string(), "timestamptz".to_string());
         m
     }
     fn search_fields() -> &'static [&'static str] {

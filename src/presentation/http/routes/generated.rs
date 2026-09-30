@@ -92,43 +92,43 @@ pub mod individual {
     use super::*;
 
     pub fn contact_message_routes(service: Arc<ContactMessageService>) -> Router {
-        create_contact_message_routes(service)
+        create_contact_message_read_routes(service)
     }
 
     pub fn menu_routes(service: Arc<MenuService>) -> Router {
-        create_menu_routes(service)
+        create_menu_read_routes(service)
     }
 
     pub fn menu_block_routes(service: Arc<MenuBlockService>) -> Router {
-        create_menu_block_routes(service)
+        create_menu_block_read_routes(service)
     }
 
     pub fn page_routes(service: Arc<PageService>) -> Router {
-        create_page_routes(service)
+        create_page_read_routes(service)
     }
 
     pub fn page_block_routes(service: Arc<PageBlockService>) -> Router {
-        create_page_block_routes(service)
+        create_page_block_read_routes(service)
     }
 
     pub fn redirect_routes(service: Arc<RedirectService>) -> Router {
-        create_redirect_routes(service)
+        create_redirect_read_routes(service)
     }
 
     pub fn visitor_routes(service: Arc<VisitorService>) -> Router {
-        create_visitor_routes(service)
+        create_visitor_read_routes(service)
     }
 
     pub fn visitor_track_routes(service: Arc<VisitorTrackService>) -> Router {
-        create_visitor_track_routes(service)
+        create_visitor_track_read_routes(service)
     }
 
     pub fn website_routes(service: Arc<WebsiteService>) -> Router {
-        create_website_routes(service)
+        create_website_read_routes(service)
     }
 
     pub fn website_member_routes(service: Arc<WebsiteMemberService>) -> Router {
-        create_website_member_routes(service)
+        create_website_member_read_routes(service)
     }
 
 }
