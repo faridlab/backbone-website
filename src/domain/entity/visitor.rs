@@ -246,6 +246,7 @@ impl backbone_orm::EntityRepoMeta for Visitor {
         m.insert("website_id".to_string(), "uuid".to_string());
         m.insert("portal_user_id".to_string(), "uuid".to_string());
         m.insert("kind".to_string(), "website_visitor_kind".to_string());
+        m.insert("last_connection_at".to_string(), "timestamptz".to_string());
         m
     }
     fn search_fields() -> &'static [&'static str] {
