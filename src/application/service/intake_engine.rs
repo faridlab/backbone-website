@@ -255,6 +255,13 @@ impl IntakeEngine {
         &self.pool
     }
 
+    /// The database this call runs on: the composer's request pool when one
+    /// is bound (a tenant mount, or a relay consumer wrapped by the host),
+    /// else the composed pool (ADR-0029 pool law).
+    fn rpool(&self) -> PgPool {
+        crate::request_pool::current().unwrap_or_else(|| self.pool.clone())
+    }
+
     /// One heartbeat's per-IP window bump on the SAME books and window
     /// arithmetic the intake verbs use — one limiter subsystem, not a
     /// second. The key carries its own namespace (heartbeat:) so a busy
@@ -346,7 +353,7 @@ impl IntakeEngine {
             let token = ctx.turnstile_token.unwrap_or("");
             if let Err(e) = self.captcha.verify(token).await {
                 record_audit_on_pool(
-                    &self.pool,
+                    &self.rpool(),
                     "intake_refused",
                     ActorRef::system(),
                     Some("intake"),
@@ -363,7 +370,7 @@ impl IntakeEngine {
         // 3. Tier B books.
         if let Err(e) = self.arm_rate_buckets(D::NAME, IntakeRatePolicy::of::<D>(), ctx) {
             record_audit_on_pool(
-                &self.pool,
+                &self.rpool(),
                 "intake_refused",
                 ActorRef::system(),
                 Some("intake"),
@@ -377,7 +384,7 @@ impl IntakeEngine {
         // Typed validation.
         if let Err(e) = D::validate(&payload).await {
             record_audit_on_pool(
-                &self.pool,
+                &self.rpool(),
                 "intake_refused",
                 ActorRef::system(),
                 Some("intake"),
@@ -393,7 +400,7 @@ impl IntakeEngine {
         // The plain-pool write law: the module-owned transaction relays
         // the ambient org scope (a no-op on the anonymous public intake
         // path, where no scope is open).
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let savepoint = savepoint_ident(D::NAME);
         sqlx::query(&format!("SAVEPOINT {savepoint}"))
@@ -410,7 +417,7 @@ impl IntakeEngine {
                     .await;
                 let _ = tx.rollback().await;
                 record_audit_on_pool(
-                    &self.pool,
+                    &self.rpool(),
                     "intake_refused",
                     ActorRef::system(),
                     Some("intake"),
@@ -427,7 +434,7 @@ impl IntakeEngine {
         tx.commit().await?;
 
         record_audit_on_pool(
-            &self.pool,
+            &self.rpool(),
             "intake_received",
             ActorRef::system(),
             Some("intake"),
@@ -446,7 +453,7 @@ impl IntakeEngine {
                 // notification by the time notify_intake resolves.
                 notified = true;
                 if let Some(id) = outcome.subject_id {
-                    let mut tx = self.pool.begin().await?;
+                    let mut tx = self.rpool().begin().await?;
                     crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
                     let _ = sqlx::query(
                         "UPDATE website.contact_messages SET notified = TRUE WHERE id = $1",

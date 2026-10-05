@@ -201,6 +201,13 @@ impl WebsiteRootService {
         &self.pool
     }
 
+    /// The database this call runs on: the composer's request pool when one
+    /// is bound (a tenant mount, or a relay consumer wrapped by the host),
+    /// else the composed pool (ADR-0029 pool law).
+    pub(super) fn rpool(&self) -> PgPool {
+        crate::request_pool::current().unwrap_or_else(|| self.pool.clone())
+    }
+
     /// The bootstrap create verb — ONE transaction: mint (or bind) the
     /// public principal, insert the website, seed the homepage page
     /// (key 'homepage', url the site's homepage_url), seed the root
@@ -224,7 +231,7 @@ impl WebsiteRootService {
             _ => None,
         };
 
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         // The plain-pool write law: a module-owned transaction relays the
         // ambient org scope so the fence (once declared) sees the caller's
         // entitlements; a no-op while no scope is open.
@@ -434,7 +441,7 @@ impl WebsiteRootService {
             "#,
         )
         .bind(normalized)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&self.rpool())
         .await?
         .ok_or(WebsiteError::WebsiteNotResolved)?;
         Ok(row)
@@ -442,7 +449,7 @@ impl WebsiteRootService {
 
     pub async fn website_by_id(&self, id: Uuid) -> Result<WebsiteView, WebsiteError> {
         backbone_orm::company_scope::fetch_optional_scoped(
-            &self.pool,
+            &self.rpool(),
             sqlx::query_as::<_, WebsiteView>(
                 r#"
                 SELECT id, name, domain, company_id, public_user_id, default_lang_code,
@@ -463,7 +470,7 @@ impl WebsiteRootService {
         company_id: Option<Uuid>,
     ) -> Result<Vec<WebsiteView>, WebsiteError> {
         backbone_orm::company_scope::fetch_all_scoped(
-            &self.pool,
+            &self.rpool(),
             sqlx::query_as::<_, WebsiteView>(
                 r#"
                 SELECT id, name, domain, company_id, public_user_id, default_lang_code,
@@ -487,7 +494,7 @@ impl WebsiteRootService {
         company_id: Uuid,
     ) -> Result<Option<WebsiteView>, WebsiteError> {
         let row = backbone_orm::company_scope::fetch_optional_scoped(
-            &self.pool,
+            &self.rpool(),
             sqlx::query_as::<_, WebsiteView>(
                 r#"
                 SELECT id, name, domain, company_id, public_user_id, default_lang_code,
@@ -514,7 +521,7 @@ impl WebsiteRootService {
                 return Err(WebsiteError::WebsiteIsPrimaryForCompany);
             }
         }
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         sqlx::query(
             r#"
@@ -598,7 +605,7 @@ impl WebsiteRootService {
         qb.push(" WHERE id = ").push_bind(id);
         qb.push(" RETURNING id, name, domain, company_id, public_user_id, default_lang_code, \
                  homepage_url, robots_txt, social_links, contact_recipients, sequence");
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let view = qb
             .build_query_as::<WebsiteView>()
@@ -641,7 +648,7 @@ impl WebsiteRootService {
         )
         .bind(website_id)
         .bind(principal_user_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&self.rpool())
         .await?
         .flatten();
         Ok(company.into_iter().collect())

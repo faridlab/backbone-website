@@ -544,7 +544,7 @@ async fn visitor_heartbeat(
     };
     let page_id = match body.page_key.as_deref() {
         Some(key) => match crate::application::service::specificity::resolve_specific(
-            state.pages.pool(),
+            &state.pages.rpool(),
             key,
             website.id,
         )
@@ -646,4 +646,12 @@ pub fn website_public_routes(state: WebsitePublicState) -> Router {
         .route("/public/visitors/heartbeat", post(visitor_heartbeat))
         .route("/public/intake/:verb", post(public_intake))
         .with_state(state)
+
+        // Bind the composer's request pool (ADR-0029 pool law) for the verbs:
+        // under a tenant mount the writes go to the tenant's database; without
+        // one the composed pool stays the fallback. Applied AFTER the routes —
+        // a Router layer only wraps what was registered before the call.
+        .layer(axum::middleware::from_fn(
+            crate::request_pool::bind_request_pool,
+        ))
 }

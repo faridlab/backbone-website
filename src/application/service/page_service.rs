@@ -165,6 +165,13 @@ impl PageAdminService {
         &self.pool
     }
 
+    /// The database this call runs on: the composer's request pool when one
+    /// is bound (a tenant mount, or a relay consumer wrapped by the host),
+    /// else the composed pool (ADR-0029 pool law).
+    pub(crate) fn rpool(&self) -> PgPool {
+        crate::request_pool::current().unwrap_or_else(|| self.pool.clone())
+    }
+
     /// Officer create (admin tree). Audits `page_created`. A url/key
     /// collision on the specificity grain maps to the typed 409.
     pub async fn create_page(
@@ -182,7 +189,7 @@ impl PageAdminService {
         // The plain-pool write law: a module-owned transaction relays the
         // ambient org scope so the fence (once declared) sees the caller's
         // entitlements; a no-op while no scope is open.
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let page = sqlx::query_as::<_, Page>(
             r#"
@@ -211,7 +218,7 @@ impl PageAdminService {
         tx.commit().await?;
 
         record_audit_on_pool(
-            &self.pool,
+            &self.rpool(),
             "page_created",
             actor,
             Some("page"),
@@ -227,14 +234,14 @@ impl PageAdminService {
     /// admin tree never binds by host. The set fold lives in the ONE
     /// resolver.
     pub async fn list_pages(&self, website_id: Uuid) -> Result<Vec<Page>, WebsiteError> {
-        super::specificity::resolve_effective_pages(&self.pool, website_id).await
+        super::specificity::resolve_effective_pages(&self.rpool(), website_id).await
     }
 
     /// All raw rows for a key (officer provenance sight: the generic
     /// and every specific together).
     pub async fn rows_for_key(&self, key: &str) -> Result<Vec<Page>, WebsiteError> {
         let rows = backbone_orm::company_scope::fetch_all_scoped(
-            &self.pool,
+            &self.rpool(),
             sqlx::query_as::<_, Page>(
                 r#"
                 SELECT * FROM website.pages
@@ -309,7 +316,7 @@ impl PageAdminService {
         qb.push(")");
         qb.push(" WHERE id = ").push_bind(id);
         qb.push(" AND (metadata->>'deleted_at') IS NULL RETURNING *");
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let page = qb
             .build_query_as::<Page>()
@@ -318,7 +325,7 @@ impl PageAdminService {
             .map_err(super::website_error::map_unique_violation)?;
         tx.commit().await?;
         record_audit_on_pool(
-            &self.pool,
+            &self.rpool(),
             "page_updated",
             actor,
             Some("page"),
@@ -333,7 +340,7 @@ impl PageAdminService {
     /// stays lazily at its first publish instant. Audits
     /// `page_published`.
     pub async fn publish(&self, actor: ActorRef, id: Uuid) -> Result<Page, WebsiteError> {
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let page = sqlx::query_as::<_, Page>(
             r#"
@@ -358,7 +365,7 @@ impl PageAdminService {
     /// kept (the first-publish instant is history). Audits
     /// `page_unpublished`.
     pub async fn unpublish(&self, actor: ActorRef, id: Uuid) -> Result<Page, WebsiteError> {
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let page = sqlx::query_as::<_, Page>(
             r#"
@@ -390,7 +397,7 @@ impl PageAdminService {
         create_redirect: Option<u16>,
     ) -> Result<Page, WebsiteError> {
         validate_url(&new_url)?;
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let old: Option<(String, Option<Uuid>, String)> = sqlx::query_as(
             r#"
@@ -523,7 +530,7 @@ impl PageAdminService {
     /// back to the generic (the resolver picks it up). A generic row
     /// REFUSES: the fanout verb is the only generic deletion.
     pub async fn delete_specific(&self, actor: ActorRef, id: Uuid) -> Result<(), WebsiteError> {
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let row: Option<(String, Option<Uuid>)> = sqlx::query_as(
             "SELECT key, website_id FROM website.pages WHERE id = $1 \
@@ -593,7 +600,7 @@ impl PageAdminService {
     /// block arm).
     pub async fn page_blocks(&self, page_id: Uuid) -> Result<Vec<BlockView>, WebsiteError> {
         let blocks = backbone_orm::company_scope::fetch_all_scoped(
-            &self.pool,
+            &self.rpool(),
             sqlx::query_as::<_, BlockView>(
                 r#"
                 SELECT kind::text AS kind, position, payload
@@ -626,7 +633,7 @@ impl PageAdminService {
         // anonymous storefront read carries no ambient org scope, and a
         // scoped caller inherits the fence through the resolver's
         // keyed lookups, never an enumeration.
-        let resolution = resolve_page_by_url(&self.pool, url, website_id).await?;
+        let resolution = resolve_page_by_url(&self.rpool(), url, website_id).await?;
         let row = match resolution {
             Resolution::None => return Ok(None),
             Resolution::Specific(r) => r,
@@ -641,7 +648,7 @@ impl PageAdminService {
             }
         }
         if !tier_passes(
-            &self.pool,
+            &self.rpool(),
             &row.visibility,
             row.required_member_roles.as_deref().unwrap_or(&[]),
             website_id,
@@ -662,7 +669,7 @@ impl PageAdminService {
         cursor: Option<&str>,
         limit: i64,
     ) -> Result<Vec<ResolvedPage>, WebsiteError> {
-        resolve_sitemap_page(&self.pool, website_id, cursor, limit).await
+        resolve_sitemap_page(&self.rpool(), website_id, cursor, limit).await
     }
 }
 

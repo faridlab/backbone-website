@@ -76,6 +76,14 @@ pub fn tour_routes(state: TourPrincipalState) -> Router {
         .route("/tours/:name", get(tour_by_name))
         .route("/tours/:name/consume", axum::routing::post(consume))
         .with_state(state)
+
+        // Bind the composer's request pool (ADR-0029 pool law) for the verbs:
+        // under a tenant mount the writes go to the tenant's database; without
+        // one the composed pool stays the fallback. Applied AFTER the routes —
+        // a Router layer only wraps what was registered before the call.
+        .layer(axum::middleware::from_fn(
+            crate::request_pool::bind_request_pool,
+        ))
 }
 
 async fn require_principal(

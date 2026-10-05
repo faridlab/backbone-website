@@ -91,6 +91,13 @@ impl TourService {
         Self { pool }
     }
 
+    /// The database this call runs on: the composer's request pool when one
+    /// is bound (a tenant mount, or a relay consumer wrapped by the host),
+    /// else the composed pool (ADR-0029 pool law).
+    fn rpool(&self) -> sqlx::PgPool {
+        crate::request_pool::current().unwrap_or_else(|| self.pool.clone())
+    }
+
     /// Create or update the live tour definition carrying `name`.
     /// Idempotent by name — the engine's consumption key never moves.
     pub async fn upsert_tour(
@@ -139,7 +146,7 @@ impl TourService {
         // ambient org scope so the fence (once declared) sees the caller's
         // entitlements; a no-op while no scope is open. Tours themselves
         // stay global rows (not website-scoped) by port design.
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let tour = sqlx::query_as::<_, TourView>(
             r#"
@@ -180,7 +187,7 @@ impl TourService {
     /// The live definition for one name (the engine's by-name lookup).
     pub async fn tour_by_name(&self, name: &str) -> Result<Option<TourView>, WebsiteError> {
         let tour = backbone_orm::company_scope::fetch_optional_scoped(
-            &self.pool,
+            &self.rpool(),
             sqlx::query_as::<_, TourView>(
                 r#"
                 SELECT id, name, display_name, rainbow_man_message, steps,
@@ -198,7 +205,7 @@ impl TourService {
     /// Every live definition, ordered by name (deterministic).
     pub async fn list_tours(&self) -> Result<Vec<TourView>, WebsiteError> {
         let tours = backbone_orm::company_scope::fetch_all_scoped(
-            &self.pool,
+            &self.rpool(),
             sqlx::query_as::<_, TourView>(
                 r#"
                 SELECT id, name, display_name, rainbow_man_message, steps,
@@ -217,7 +224,7 @@ impl TourService {
     /// immediately re-creatable — the live-unique index ignores dead
     /// rows). A missing name is the typed 404.
     pub async fn delete_tour(&self, actor: ActorRef, name: &str) -> Result<(), WebsiteError> {
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let deleted = sqlx::query_scalar::<_, Uuid>(
             r#"
@@ -257,7 +264,7 @@ impl TourService {
         portal_user_id: Uuid,
         name: &str,
     ) -> Result<ConsumeOutcome, WebsiteError> {
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let tour: Option<(Uuid,)> = sqlx::query_as(
             r#"
@@ -316,7 +323,7 @@ impl TourService {
         portal_user_id: Uuid,
     ) -> Result<Vec<ConsumedTour>, WebsiteError> {
         let consumed = backbone_orm::company_scope::fetch_all_scoped(
-            &self.pool,
+            &self.rpool(),
             sqlx::query_as::<_, ConsumedTour>(
                 r#"
                 SELECT t.name, c.tour_id, c.consumed_at
@@ -337,7 +344,7 @@ impl TourService {
     /// tour verb that erases user-visible state). Returns the number
     /// of dropped facts.
     pub async fn reset_tour(&self, actor: ActorRef, name: &str) -> Result<u64, WebsiteError> {
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let tour: Option<(Uuid,)> = sqlx::query_as(
             r#"

@@ -76,6 +76,13 @@ impl WebsiteAdminState {
         let pepper = std::env::var("WEBSITE_VISITOR_PEPPER").unwrap_or_default();
         Self::new(pool, pepper)
     }
+
+    /// The database this call runs on: the composer's request pool when one
+    /// is bound (a tenant mount, or a relay consumer wrapped by the host),
+    /// else the composed pool (ADR-0029 pool law).
+    fn rpool(&self) -> sqlx::PgPool {
+        crate::request_pool::current().unwrap_or_else(|| self.pool.clone())
+    }
 }
 
 fn actor_of(extensions: &Extensions) -> ActorRef {
@@ -434,7 +441,7 @@ async fn patch_page(
         if raw.get(*field).is_some() {
             let refusal = WebsiteError::FieldNotPatchable { field, verb: "publish/unpublish" };
             let _ = crate::application::service::website_service::record_audit_on_pool(
-                &state.pool,
+                &state.rpool(),
                 "publish_refused",
                 actor,
                 Some("page"),
@@ -505,7 +512,7 @@ async fn fork_page(
 ) -> Response {
     let actor = actor_of(&extensions);
     match crate::application::service::versioning_service::fork_to_website(
-        &state.pool,
+        &state.rpool(),
         actor,
         &body.key,
         body.target_website_id,
@@ -537,7 +544,7 @@ async fn fanout_delete_page(
 ) -> Response {
     let actor = actor_of(&extensions);
     match crate::application::service::versioning_service::delete_generic_with_fanout(
-        &state.pool,
+        &state.rpool(),
         actor,
         &body.key,
     )
@@ -845,10 +852,10 @@ async fn sweep_visitors(
         .ok()
         .and_then(|v| v.trim().parse::<i64>().ok())
         .unwrap_or(DEFAULT_GC_BATCH);
-    match sweep_partnerless_visitors(&state.pool, retention, batch).await {
+    match sweep_partnerless_visitors(&state.rpool(), retention, batch).await {
         Ok(summary) => {
             let _ = crate::application::service::website_service::record_audit_on_pool(
-                &state.pool,
+                &state.rpool(),
                 "visitor_gc_swept",
                 actor,
                 Some("visitor"),
@@ -982,7 +989,7 @@ async fn list_contact_messages(
 ) -> Response {
     let rows: Vec<(Uuid, Option<String>, String, String, bool, chrono::DateTime<chrono::Utc>)> =
         match backbone_orm::company_scope::fetch_all_scoped(
-            &state.pool,
+            &state.rpool(),
             sqlx::query_as(
                 r#"
                 SELECT id, name, email, message, notified,
@@ -1050,4 +1057,12 @@ pub fn website_admin_routes(state: WebsiteAdminState) -> Router {
         // intake reads
         .route("/admin/intake/contact-messages", get(list_contact_messages))
         .with_state(state)
+
+        // Bind the composer's request pool (ADR-0029 pool law) for the verbs:
+        // under a tenant mount the writes go to the tenant's database; without
+        // one the composed pool stays the fallback. Applied AFTER the routes —
+        // a Router layer only wraps what was registered before the call.
+        .layer(axum::middleware::from_fn(
+            crate::request_pool::bind_request_pool,
+        ))
 }

@@ -134,6 +134,13 @@ impl RedirectAdminService {
         &self.pool
     }
 
+    /// The database this call runs on: the composer's request pool when one
+    /// is bound (a tenant mount, or a relay consumer wrapped by the host),
+    /// else the composed pool (ADR-0029 pool law).
+    fn rpool(&self) -> PgPool {
+        crate::request_pool::current().unwrap_or_else(|| self.pool.clone())
+    }
+
     /// Officer create — validated (308 parity, target rules); a
     /// second answer for one path maps to the typed 409. Audits
     /// `redirect_created`.
@@ -142,7 +149,7 @@ impl RedirectAdminService {
         // The plain-pool write law: a module-owned transaction relays the
         // ambient org scope so the fence (once declared) sees the caller's
         // entitlements; a no-op while no scope is open.
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let row = sqlx::query_as::<_, Redirect>(
             r#"
@@ -165,7 +172,7 @@ impl RedirectAdminService {
         .map_err(super::website_error::map_unique_violation)?;
         tx.commit().await?;
         record_audit_on_pool(
-            &self.pool,
+            &self.rpool(),
             "redirect_created",
             actor,
             Some("redirect"),
@@ -187,7 +194,7 @@ impl RedirectAdminService {
             ));
         }
         let current: Option<Redirect> = backbone_orm::company_scope::fetch_optional_scoped(
-            &self.pool,
+            &self.rpool(),
             sqlx::query_as::<_, Redirect>(
                 "SELECT * FROM website.redirects WHERE id = $1 \
                  AND (metadata->>'deleted_at') IS NULL",
@@ -245,7 +252,7 @@ impl RedirectAdminService {
         qb.push(")");
         qb.push(" WHERE id = ").push_bind(id);
         qb.push(" AND (metadata->>'deleted_at') IS NULL RETURNING *");
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let row = qb
             .build_query_as::<Redirect>()
@@ -254,7 +261,7 @@ impl RedirectAdminService {
             .map_err(super::website_error::map_unique_violation)?;
         tx.commit().await?;
         record_audit_on_pool(
-            &self.pool,
+            &self.rpool(),
             "redirect_updated",
             actor,
             Some("redirect"),
@@ -267,7 +274,7 @@ impl RedirectAdminService {
 
     /// Officer delete. Audits `redirect_deleted`.
     pub async fn delete(&self, actor: ActorRef, id: Uuid) -> Result<(), WebsiteError> {
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let existing: Option<Uuid> = sqlx::query_scalar(
             "SELECT id FROM website.redirects WHERE id = $1 \
@@ -299,7 +306,7 @@ impl RedirectAdminService {
     /// Officer list for one website.
     pub async fn list(&self, website_id: Uuid) -> Result<Vec<Redirect>, WebsiteError> {
         let rows = backbone_orm::company_scope::fetch_all_scoped(
-            &self.pool,
+            &self.rpool(),
             sqlx::query_as::<_, Redirect>(
                 r#"
                 SELECT * FROM website.redirects
@@ -317,7 +324,7 @@ impl RedirectAdminService {
     /// matcher's case-7 input. Fresh read, no cache.
     pub async fn answer(&self, website_id: Uuid, url: &str) -> Result<Option<MatcherRedirectAnswer>, WebsiteError> {
         let row = backbone_orm::company_scope::fetch_optional_scoped(
-            &self.pool,
+            &self.rpool(),
             sqlx::query_as::<_, (String, Option<String>)>(
                 r#"
                 SELECT redirect_type::text, url_to
@@ -344,7 +351,7 @@ impl RedirectAdminService {
     ) -> Result<(), WebsiteError> {
         let target = if kind == "gone_404" { None } else { Some(url_to.to_string()) };
         validate_redirect(kind, url_from, &target)?;
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         sqlx::query(
             r#"

@@ -136,6 +136,13 @@ impl MenuAdminService {
         &self.pool
     }
 
+    /// The database this call runs on: the composer's request pool when one
+    /// is bound (a tenant mount, or a relay consumer wrapped by the host),
+    /// else the composed pool (ADR-0029 pool law).
+    fn rpool(&self) -> PgPool {
+        crate::request_pool::current().unwrap_or_else(|| self.pool.clone())
+    }
+
     /// Depth of a node (root = 0), walking parents in SQL.
     async fn depth_of(
         exec: impl sqlx::Executor<'_, Database = sqlx::Postgres>,
@@ -183,7 +190,7 @@ impl MenuAdminService {
         // ambient org scope so the fence (once declared) sees the caller's
         // entitlements; a no-op while no scope is open. The depth
         // validation rides the same transaction so its read is fenced too.
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         if let Some(parent) = input.parent_id {
             if input.is_mega_menu {
@@ -222,7 +229,7 @@ impl MenuAdminService {
         .map_err(super::website_error::map_unique_violation)?;
         tx.commit().await?;
         record_audit_on_pool(
-            &self.pool,
+            &self.rpool(),
             "menu_created",
             actor,
             Some("menu"),
@@ -243,7 +250,7 @@ impl MenuAdminService {
                 "the menu patch sets no field".into(),
             ));
         }
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let current: Option<Menu> = sqlx::query_as::<_, Menu>(
             "SELECT * FROM website.menus WHERE id = $1 \
@@ -334,7 +341,7 @@ impl MenuAdminService {
             .map_err(super::website_error::map_unique_violation)?;
         tx.commit().await?;
         record_audit_on_pool(
-            &self.pool,
+            &self.rpool(),
             "menu_updated",
             actor,
             Some("menu"),
@@ -348,7 +355,7 @@ impl MenuAdminService {
     /// LOCAL-only delete (its website, nothing else — the upstream
     /// cross-website cascade is not ported). Audits `menu_deleted`.
     pub async fn delete_menu(&self, actor: ActorRef, id: Uuid) -> Result<(), WebsiteError> {
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let row: Option<Uuid> = sqlx::query_scalar(
             "SELECT id FROM website.menus WHERE id = $1 \
@@ -383,7 +390,7 @@ impl MenuAdminService {
     /// ONE resolver — never a cross-website page binding), mega blocks
     /// included. Audits `menu_fanout`. Returns the created-id list.
     pub async fn fanout_menu(&self, actor: ActorRef, id: Uuid) -> Result<Vec<Uuid>, WebsiteError> {
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let source: Option<Menu> = sqlx::query_as::<_, Menu>(
             "SELECT * FROM website.menus WHERE id = $1 \
@@ -511,7 +518,7 @@ impl MenuAdminService {
     /// The officer tree (admin read, everything).
     pub async fn tree_admin(&self, website_id: Uuid) -> Result<Vec<MenuNode>, WebsiteError> {
         let rows = backbone_orm::company_scope::fetch_all_scoped(
-            &self.pool,
+            &self.rpool(),
             sqlx::query_as::<_, Menu>(
                 r#"
                 SELECT * FROM website.menus
@@ -534,7 +541,7 @@ impl MenuAdminService {
         principal: Option<Uuid>,
     ) -> Result<Vec<MenuNode>, WebsiteError> {
         let rows = backbone_orm::company_scope::fetch_all_scoped(
-            &self.pool,
+            &self.rpool(),
             sqlx::query_as::<_, Menu>(
                 r#"
                 SELECT * FROM website.menus
@@ -551,7 +558,7 @@ impl MenuAdminService {
             // also runs inside relayed transactions); on the anonymous
             // public tree read it carries no ambient scope by design.
             if tier_passes(
-                &self.pool,
+                &self.rpool(),
                 &m.visibility.to_string(),
                 &m.required_member_roles,
                 website_id,
@@ -599,7 +606,7 @@ impl MenuAdminService {
         // 404 — no cross-website oracle).
         let anchor = if let Some(parent_id) = parent {
             let row = backbone_orm::company_scope::fetch_optional_scoped(
-                &self.pool,
+                &self.rpool(),
                 sqlx::query_as::<_, HierarchyNode>(
                     r#"
                     SELECT m.id, m.parent_id, m.name, m.page_id, m.url, m.new_window,
@@ -631,7 +638,7 @@ impl MenuAdminService {
         // One level below the anchor (or the roots), limit+1 fetched so
         // truncation is observable without a second count query.
         let mut rows = backbone_orm::company_scope::fetch_all_scoped(
-            &self.pool,
+            &self.rpool(),
             sqlx::query_as::<_, HierarchyNode>(
                 r#"
                 SELECT m.id, m.parent_id, m.name, m.page_id, m.url, m.new_window,
@@ -671,7 +678,7 @@ impl MenuAdminService {
         menu_id: Uuid,
     ) -> Result<Vec<super::page_service::BlockView>, WebsiteError> {
         let blocks = backbone_orm::company_scope::fetch_all_scoped(
-            &self.pool,
+            &self.rpool(),
             sqlx::query_as::<_, super::page_service::BlockView>(
                 r#"
                 SELECT kind::text AS kind, position, payload

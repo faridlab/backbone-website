@@ -168,7 +168,7 @@ impl WebsiteSurface for PgWebsiteSurface {
         page_key: Option<&str>,
     ) -> WebsiteResult<()> {
         let page_id = match page_key {
-            Some(key) => resolve_specific(self.pages.pool(), key, website_id)
+            Some(key) => resolve_specific(&self.pages.rpool(), key, website_id)
                 .await?
                 .row()
                 .map(|r| r.id),
@@ -181,6 +181,6 @@ impl WebsiteSurface for PgWebsiteSurface {
     }
 
     async fn sweep_visitors(&self) -> WebsiteResult<SweepSummary> {
-        sweep_partnerless_visitors(self.websites.pool(), self.retention_days, self.gc_batch).await
+        sweep_partnerless_visitors(&self.websites.rpool(), self.retention_days, self.gc_batch).await
     }
 }

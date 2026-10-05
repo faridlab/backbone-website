@@ -38,6 +38,11 @@ user_owned:
   # generator fixes digit-boundary snake_case mapping.
   - "src/domain/entity/website_redirect_type.rs"
 
+  # The composer-installed request-pool shim the verb services resolve
+  # their database through (ADR-0029 pool law): hand-written, never
+  # schema-derived.
+  - "src/request_pool.rs"
+
   # The module's typed error surface (one enum, HTTP mappings) — shared by
   # every hand service below.
   - "src/application/service/website_error.rs"

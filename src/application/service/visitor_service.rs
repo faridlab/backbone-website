@@ -172,6 +172,13 @@ impl VisitorEngine {
         &self.pool
     }
 
+    /// The database this call runs on: the composer's request pool when one
+    /// is bound (a tenant mount, or a relay consumer wrapped by the host),
+    /// else the composed pool (ADR-0029 pool law).
+    fn rpool(&self) -> PgPool {
+        crate::request_pool::current().unwrap_or_else(|| self.pool.clone())
+    }
+
     /// The heartbeat — ONE statement: upsert the visitor on
     /// (digest, website) with the visit-window counter, the track CTE
     /// riding the same statement (a visitor row and its first track
@@ -193,7 +200,7 @@ impl VisitorEngine {
         // The plain-pool write law: the one-statement heartbeat rides a
         // module-owned transaction that relays the ambient org scope (a
         // no-op on the anonymous public path, where no scope is open).
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
         let (visitor_id, inserted, token, kind, tracks): (Uuid, bool, String, String, i64) =
             sqlx::query_as(
@@ -261,7 +268,7 @@ impl VisitorEngine {
         anonymous_visitor_id: Uuid,
         portal_user_id: Uuid,
     ) -> Result<VisitorView, WebsiteError> {
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         crate::infrastructure::persistence::relay_ambient_scope(&mut tx).await?;
 
         // The identified row, if one exists (lock-skip: a concurrent
@@ -350,7 +357,7 @@ impl VisitorEngine {
     /// Officer list for one website (digest never leaves the store).
     pub async fn list(&self, website_id: Uuid) -> Result<Vec<VisitorView>, WebsiteError> {
         let rows = backbone_orm::company_scope::fetch_all_scoped(
-            &self.pool,
+            &self.rpool(),
             sqlx::query_as::<_, VisitorView>(
                 r#"
                 SELECT id, website_id, kind::text, digest_algo, portal_user_id,
@@ -371,7 +378,7 @@ impl VisitorEngine {
     /// (last connection within the connected window).
     pub async fn connected_count(&self, website_id: Uuid) -> Result<i64, WebsiteError> {
         let (n,): (i64,) = backbone_orm::company_scope::fetch_one_scoped(
-            &self.pool,
+            &self.rpool(),
             sqlx::query_as(
                 r#"
                 SELECT COUNT(*) FROM website.visitors
