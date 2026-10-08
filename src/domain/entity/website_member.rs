@@ -165,6 +165,9 @@ impl super::Entity for WebsiteMember {
 }
 
 impl backbone_core::PersistentEntity for WebsiteMember {
+    fn write_protected_fields() -> &'static [&'static str] {
+        &["role"]
+    }
     fn entity_id(&self) -> String {
         self.id.to_string()
     }

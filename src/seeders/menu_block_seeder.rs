@@ -36,7 +36,7 @@ impl Seeder for SeedMenuBlockSeeder {
     }
 
     fn order(&self) -> i32 {
-        2
+        10
     }
 
     async fn should_run(&self, pool: &PgPool) -> Result<bool> {

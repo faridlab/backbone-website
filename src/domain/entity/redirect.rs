@@ -191,6 +191,9 @@ impl super::Entity for Redirect {
 }
 
 impl backbone_core::PersistentEntity for Redirect {
+    fn write_protected_fields() -> &'static [&'static str] {
+        &["redirect_type"]
+    }
     fn entity_id(&self) -> String {
         self.id.to_string()
     }

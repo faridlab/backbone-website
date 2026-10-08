@@ -24,8 +24,7 @@ pub mod application;
 pub mod presentation;
 pub mod seeders;
 pub mod exports;
-
-// <<< CUSTOM
+// <<< CUSTOM MODULES
 // The hand-owned request-pool shim (the composing service's tenant pool
 // resolution): a generated-tree declaration the regenerator drops, so it
 // lives in the preserved block (#447 cause-2 class).
@@ -168,6 +167,8 @@ impl WebsiteModule {
 /// Builder for WebsiteModule
 pub struct WebsiteModuleBuilder {
     db_pool: Option<PgPool>,
+    // <<< CUSTOM BUILDER FIELDS
+    // END CUSTOM
 }
 
 impl WebsiteModuleBuilder {
@@ -175,6 +176,8 @@ impl WebsiteModuleBuilder {
     pub fn new() -> Self {
         Self {
             db_pool: None,
+            // <<< CUSTOM BUILDER DEFAULTS
+            // END CUSTOM
         }
     }
 

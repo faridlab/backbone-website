@@ -1,6 +1,6 @@
 [package]
 name = "backbone-website"
-version = "0.3.38"
+version = "0.4.0"
 edition = "2021"
 description = "Headless website engine — per-website pages/menus with ONE generic-vs-specific resolver backed by real COALESCE-sentinel unique constraints, explicit copy-on-write/copy-on-unlink versioning verbs with provenance, the stored+derived+fenced publish contract, GDPR-shaped visitors (keyed digest, random tokens, no raw IP), turnstile-gated declared intake verbs, the SEO redirect table + table-driven routing matcher, and a declared public read allowlist with negative-enumeration posture (Odoo website port; rendering stays in the webapps)"
 license = "MIT OR Apache-2.0"
@@ -19,10 +19,10 @@ path = "src/lib.rs"
 # at module creation (single-rev policy: every framework source in the
 # resolved graph resolves to this one tag).
 # -----------------------------------------------------------------------------
-backbone-core = { version = "2.7.35", features = ["postgres"] }
-backbone-orm = { version = "2.7.35" }
-backbone-auth = { version = "2.7.35" }
-backbone-rate-limit = { version = "2.7.35" }
+backbone-core = { version = "3.0.0", features = ["postgres"] }
+backbone-orm = { version = "3.0.0" }
+backbone-auth = { version = "3.0.0" }
+backbone-rate-limit = { version = "3.0.0" }
 # NOTE (recorded deviation from docs/spec.md §10.4, forced by the pinned
 # generator): the schema generator's emitted event scaffolding
 # (src/domain/event/*.rs — CrudEvent / CrudEventPublisher imports) does not
@@ -30,7 +30,7 @@ backbone-rate-limit = { version = "2.7.35" }
 # subscribes to NONE (hooks index declares events: {}), owns no outbox
 # table, and the host's outbox_schemas set carries no website entry — the
 # same zero-events-with-plumbing-dep posture as the digest module.
-backbone-messaging = { version = "2.7.35" }
+backbone-messaging = { version = "3.0.0" }
 
 # THE ONLY module edge (the dependency-edge contract): portal's exported
 # type-safe ids are the identity source for every principal reference in
@@ -38,8 +38,8 @@ backbone-messaging = { version = "2.7.35" }
 # website_members.portal_user_id all key on the portal-user ROW —
 # portal.portal_users(id), logical refs). Pinned tag-equal like every
 # sibling dep.
-backbone-auditlog = { version = "0.1.28" }
-backbone-portal = { version = "0.2.30" }
+backbone-auditlog = { version = "0.2.0" }
+backbone-portal = { version = "0.3.0" }
 
 # Sibling modules NOT consumed by design — recorded here so no later seat
 # adds them casually:
