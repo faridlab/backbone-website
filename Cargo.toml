@@ -1,6 +1,6 @@
 [package]
 name = "backbone-website"
-version = "0.4.0"
+version = "0.4.1"
 edition = "2021"
 description = "Headless website engine — per-website pages/menus with ONE generic-vs-specific resolver backed by real COALESCE-sentinel unique constraints, explicit copy-on-write/copy-on-unlink versioning verbs with provenance, the stored+derived+fenced publish contract, GDPR-shaped visitors (keyed digest, random tokens, no raw IP), turnstile-gated declared intake verbs, the SEO redirect table + table-driven routing matcher, and a declared public read allowlist with negative-enumeration posture (Odoo website port; rendering stays in the webapps)"
 license = "MIT OR Apache-2.0"
@@ -11,6 +11,8 @@ exclude = [".claude/", ".github/", "graphify-out/"]
 path = "src/lib.rs"
 
 [dependencies]
+# OpenAPI schema derive, only with the `openapi` feature.
+utoipa = { version = "5", optional = true, features = ["chrono", "uuid"] }
 # -----------------------------------------------------------------------------
 # Backbone Framework crates
 #
@@ -86,6 +88,15 @@ rand = "0.8"
 # Turnstile siteverify — the module's ONLY outbound HTTP call, server-side,
 # URL config-overridable for probes.
 reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
+
+
+[features]
+# Generated code gates its OpenAPI derives, request validation and auth extraction
+# behind these features; declaring them keeps every cfg checked by the compiler.
+default = []
+auth = []
+openapi = ["dep:utoipa"]
+validation = []
 
 [dev-dependencies]
 tempfile = "3.0"
