@@ -1,6 +1,6 @@
 [package]
 name = "backbone-website"
-version = "0.4.1"
+version = "0.5.0"
 edition = "2021"
 description = "Headless website engine — per-website pages/menus with ONE generic-vs-specific resolver backed by real COALESCE-sentinel unique constraints, explicit copy-on-write/copy-on-unlink versioning verbs with provenance, the stored+derived+fenced publish contract, GDPR-shaped visitors (keyed digest, random tokens, no raw IP), turnstile-gated declared intake verbs, the SEO redirect table + table-driven routing matcher, and a declared public read allowlist with negative-enumeration posture (Odoo website port; rendering stays in the webapps)"
 license = "MIT OR Apache-2.0"
@@ -21,8 +21,8 @@ utoipa = { version = "5", optional = true, features = ["chrono", "uuid"] }
 # at module creation (single-rev policy: every framework source in the
 # resolved graph resolves to this one tag).
 # -----------------------------------------------------------------------------
-backbone-core = { version = "3.0.0", features = ["postgres"] }
-backbone-orm = { version = "3.0.0" }
+backbone-core = { version = "3.1.0", features = ["postgres"] }
+backbone-orm = { version = "3.1.0" }
 backbone-auth = { version = "3.0.0" }
 backbone-rate-limit = { version = "3.0.0" }
 # NOTE (recorded deviation from docs/spec.md §10.4, forced by the pinned
@@ -41,7 +41,7 @@ backbone-messaging = { version = "3.0.0" }
 # portal.portal_users(id), logical refs). Pinned tag-equal like every
 # sibling dep.
 backbone-auditlog = { version = "0.2.0" }
-backbone-portal = { version = "0.3.0" }
+backbone-portal = { version = "0.4.0" }
 
 # Sibling modules NOT consumed by design — recorded here so no later seat
 # adds them casually:
