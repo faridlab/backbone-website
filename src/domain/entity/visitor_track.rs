@@ -173,6 +173,12 @@ impl backbone_orm::EntityRepoMeta for VisitorTrack {
     fn search_fields() -> &'static [&'static str] {
         &["url"]
     }
+    fn relation_secret_fields(relation: &str) -> &'static [&'static str] {
+        match relation {
+            "visitor" => &["accessToken"],
+            _ => &[],
+        }
+    }
     fn relations() -> &'static [(&'static str, &'static str, &'static str)] {
         &[("visitor", "visitors", "visitorId")]
     }

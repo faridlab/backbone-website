@@ -77,10 +77,6 @@ pub struct UpdateVisitorDto {
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     #[serde(alias = "website_id")]
     pub website_id: Uuid,
-    #[cfg_attr(feature = "validation", validate(length(max = 64)))]
-    #[cfg_attr(feature = "openapi", schema(example = "example"))]
-    #[serde(alias = "access_token")]
-    pub access_token: String,
     pub kind: WebsiteVisitorKind,
     #[cfg_attr(feature = "validation", validate(length(max = 128)))]
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
@@ -118,10 +114,6 @@ pub struct PatchVisitorDto {
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     #[serde(skip_serializing_if = "Option::is_none", alias = "website_id")]
     pub website_id: Option<Uuid>,
-    #[cfg_attr(feature = "validation", validate(length(max = 64)))]
-    #[cfg_attr(feature = "openapi", schema(example = "example"))]
-    #[serde(skip_serializing_if = "Option::is_none", alias = "access_token")]
-    pub access_token: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub kind: Option<WebsiteVisitorKind>,
     #[cfg_attr(feature = "validation", validate(length(max = 128)))]
@@ -148,7 +140,7 @@ pub struct PatchVisitorDto {
 impl PatchVisitorDto {
     /// Check if any field is set
     pub fn has_changes(&self) -> bool {
-        self.website_id.is_some() || self.access_token.is_some() || self.kind.is_some() || self.digest.is_some() || self.digest_algo.is_some() || self.portal_user_id.is_some() || self.country_code.is_some() || self.visit_count.is_some() || self.last_connection_at.is_some()
+        self.website_id.is_some() || self.kind.is_some() || self.digest.is_some() || self.digest_algo.is_some() || self.portal_user_id.is_some() || self.country_code.is_some() || self.visit_count.is_some() || self.last_connection_at.is_some()
     }
 }
 
@@ -324,7 +316,6 @@ impl backbone_core::FromCreateDto<CreateVisitorDto> for Visitor {
 impl backbone_core::ApplyUpdateDto<UpdateVisitorDto> for Visitor {
     fn apply_update(mut self, dto: UpdateVisitorDto) -> backbone_core::ServiceResult<Self> {
         self.website_id = dto.website_id;
-        self.access_token = dto.access_token;
         self.kind = dto.kind;
         self.digest = dto.digest;
         self.digest_algo = dto.digest_algo;

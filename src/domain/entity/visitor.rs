@@ -212,7 +212,7 @@ impl super::Entity for Visitor {
 
 impl backbone_core::PersistentEntity for Visitor {
     fn write_protected_fields() -> &'static [&'static str] {
-        &["kind"]
+        &["access_token", "kind"]
     }
     fn entity_id(&self) -> String {
         self.id.to_string()
@@ -253,7 +253,10 @@ impl backbone_orm::EntityRepoMeta for Visitor {
         m
     }
     fn search_fields() -> &'static [&'static str] {
-        &["access_token", "digest", "digest_algo"]
+        &["digest", "digest_algo"]
+    }
+    fn secret_fields() -> &'static [&'static str] {
+        &["accessToken"]
     }
     fn relations() -> &'static [(&'static str, &'static str, &'static str)] {
         &[("website", "websites", "websiteId")]

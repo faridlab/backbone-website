@@ -37,7 +37,7 @@ models:
         description: "The website this visitor row belongs to — rows are PER-WEBSITE (the digest excludes website_id by design: cross-website visitor dedup is not a requirement and minimizes joinable identity). Real same-schema FK with cascade."
       access_token:
         type: string
-        attributes: ["@required", "@max(64)"]
+        attributes: ["@required", "@max(64)", "@sensitive", "@immutable"]
         description: "RANDOM 32-byte base64url value (43 chars) minted at insert for BOTH kinds — never derived from any identity datum, never upgraded on login. UNIQUE across all rows (the upstream global arm kept)."
       kind:
         type: WebsiteVisitorKind
