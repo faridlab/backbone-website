@@ -18,5 +18,3 @@ use crate::domain::entity::VisitorTrack;
 /// service. `PermitAllPolicy` is the safe default until then.
 pub type VisitorTrackDomainPolicy = PermitAllPolicy<VisitorTrack>;
 
-// <<< CUSTOM
-// END CUSTOM

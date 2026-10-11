@@ -24,5 +24,3 @@ pub use visitor_track_domain_policy::VisitorTrackDomainPolicy;
 pub use website_domain_policy::WebsiteDomainPolicy;
 pub use website_member_domain_policy::WebsiteMemberDomainPolicy;
 
-// <<< CUSTOM
-// END CUSTOM

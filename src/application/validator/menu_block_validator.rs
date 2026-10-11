@@ -14,10 +14,6 @@ pub type MenuBlockValidator = EntityValidator<MenuBlock>;
 /// Build a validator for MenuBlock with all schema-defined field rules.
 pub fn menu_block_validator() -> MenuBlockValidator {
     EntityValidator::new()
-    // <<< CUSTOM RULES
-    // END CUSTOM RULES
         // No schema-derived rules — add custom rules above.
 }
 
-// <<< CUSTOM
-// END CUSTOM

@@ -16,9 +16,5 @@ pub type VisitorTrackValidator = EntityValidator<VisitorTrack>;
 pub fn visitor_track_validator() -> VisitorTrackValidator {
     EntityValidator::new()
         .rule(RequiredString::new("url", |e: &VisitorTrack| &e.url))
-    // <<< CUSTOM RULES
-    // END CUSTOM RULES
 }
 
-// <<< CUSTOM
-// END CUSTOM

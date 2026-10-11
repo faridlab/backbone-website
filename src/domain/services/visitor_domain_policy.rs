@@ -18,5 +18,3 @@ use crate::domain::entity::Visitor;
 /// service. `PermitAllPolicy` is the safe default until then.
 pub type VisitorDomainPolicy = PermitAllPolicy<Visitor>;
 
-// <<< CUSTOM
-// END CUSTOM

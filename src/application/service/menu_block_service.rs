@@ -32,5 +32,3 @@ pub type MenuBlockService = GenericCrudService<
     MenuBlockRepository,
 >;
 
-// <<< CUSTOM
-// END CUSTOM

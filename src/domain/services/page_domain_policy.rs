@@ -18,5 +18,3 @@ use crate::domain::entity::Page;
 /// service. `PermitAllPolicy` is the safe default until then.
 pub type PageDomainPolicy = PermitAllPolicy<Page>;
 
-// <<< CUSTOM
-// END CUSTOM

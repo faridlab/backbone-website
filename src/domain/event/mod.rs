@@ -44,5 +44,3 @@ pub use website_event_handlers::WebsiteEventHandler;
 pub use website_member_events::{WebsiteMemberEvent, WebsiteMemberEventPublisher, NoopWebsiteMemberEventPublisher};
 pub use website_member_event_handlers::WebsiteMemberEventHandler;
 
-// <<< CUSTOM
-// END CUSTOM

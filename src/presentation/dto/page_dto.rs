@@ -376,7 +376,7 @@ impl backbone_core::ApplyUpdateDto<UpdatePageDto> for Page {
 // Custom DTOs
 // =============================================================================
 
-// <<< CUSTOM DTOs
 // Add custom DTOs specific to Page here.
 // This section will be preserved during regeneration.
 // >>> END CUSTOM DTOs
+

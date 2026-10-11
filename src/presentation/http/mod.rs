@@ -16,8 +16,6 @@ pub mod visitor_track_handler;
 pub mod website_handler;
 pub mod website_member_handler;
 
-// <<< CUSTOM
-// END CUSTOM
 
 // Re-exports
 pub use contact_message_handler::{create_contact_message_routes, create_contact_message_read_routes, create_contact_message_write_routes};
@@ -30,8 +28,6 @@ pub use visitor_handler::{create_visitor_routes, create_visitor_read_routes, cre
 pub use visitor_track_handler::{create_visitor_track_routes, create_visitor_track_read_routes, create_visitor_track_write_routes};
 pub use website_handler::{create_website_routes, create_website_read_routes, create_website_write_routes};
 pub use website_member_handler::{create_website_member_routes, create_website_member_read_routes, create_website_member_write_routes};
-// <<< CUSTOM
-// END CUSTOM
 
 // This directory's extension (hand-written; ADR-0031).
 include!("mod.ext.rs");

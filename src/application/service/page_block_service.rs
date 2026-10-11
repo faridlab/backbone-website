@@ -32,5 +32,3 @@ pub type PageBlockService = GenericCrudService<
     PageBlockRepository,
 >;
 
-// <<< CUSTOM
-// END CUSTOM

@@ -340,6 +340,4 @@ impl Default for WebsiteEventMetadata {
 // CUSTOM EVENTS
 // ============================================================================
 
-// <<< CUSTOM EVENTS START >>>
 // Add custom public events here
-// <<< CUSTOM EVENTS END >>>

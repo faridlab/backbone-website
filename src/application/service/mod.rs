@@ -18,8 +18,6 @@ pub mod visitor_track_service;
 pub mod website_service;
 pub mod website_member_service;
 
-// <<< CUSTOM
-// END CUSTOM
 
 pub use contact_message_service::ContactMessageService;
 pub use menu_service::MenuService;
@@ -31,8 +29,6 @@ pub use visitor_service::VisitorService;
 pub use visitor_track_service::VisitorTrackService;
 pub use website_service::WebsiteService;
 pub use website_member_service::WebsiteMemberService;
-// <<< CUSTOM
-// END CUSTOM
 
 // This directory's extension (hand-written; ADR-0031).
 include!("mod.ext.rs");

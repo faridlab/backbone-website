@@ -18,9 +18,5 @@ pub fn redirect_validator() -> RedirectValidator {
         .rule(RequiredString::new("url_from", |e: &Redirect| &e.url_from))
         .rule(OptionalNotBlank::new("url_to", |e: &Redirect| e.url_to.as_deref()))
         .rule(OptionalNotBlank::new("description", |e: &Redirect| e.description.as_deref()))
-    // <<< CUSTOM RULES
-    // END CUSTOM RULES
 }
 
-// <<< CUSTOM
-// END CUSTOM

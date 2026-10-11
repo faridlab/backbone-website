@@ -331,7 +331,7 @@ impl backbone_core::ApplyUpdateDto<UpdateVisitorDto> for Visitor {
 // Custom DTOs
 // =============================================================================
 
-// <<< CUSTOM DTOs
 // Add custom DTOs specific to Visitor here.
 // This section will be preserved during regeneration.
 // >>> END CUSTOM DTOs
+

@@ -14,10 +14,6 @@ pub type WebsiteMemberValidator = EntityValidator<WebsiteMember>;
 /// Build a validator for WebsiteMember with all schema-defined field rules.
 pub fn website_member_validator() -> WebsiteMemberValidator {
     EntityValidator::new()
-    // <<< CUSTOM RULES
-    // END CUSTOM RULES
         // No schema-derived rules — add custom rules above.
 }
 
-// <<< CUSTOM
-// END CUSTOM

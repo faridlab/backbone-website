@@ -248,7 +248,7 @@ impl backbone_core::ApplyUpdateDto<UpdateWebsiteMemberDto> for WebsiteMember {
 // Custom DTOs
 // =============================================================================
 
-// <<< CUSTOM DTOs
 // Add custom DTOs specific to WebsiteMember here.
 // This section will be preserved during regeneration.
 // >>> END CUSTOM DTOs
+

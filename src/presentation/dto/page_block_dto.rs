@@ -250,7 +250,7 @@ impl backbone_core::ApplyUpdateDto<UpdatePageBlockDto> for PageBlock {
 // Custom DTOs
 // =============================================================================
 
-// <<< CUSTOM DTOs
 // Add custom DTOs specific to PageBlock here.
 // This section will be preserved during regeneration.
 // >>> END CUSTOM DTOs
+

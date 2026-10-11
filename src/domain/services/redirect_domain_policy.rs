@@ -18,5 +18,3 @@ use crate::domain::entity::Redirect;
 /// service. `PermitAllPolicy` is the safe default until then.
 pub type RedirectDomainPolicy = PermitAllPolicy<Redirect>;
 
-// <<< CUSTOM
-// END CUSTOM

@@ -19,9 +19,5 @@ pub fn visitor_validator() -> VisitorValidator {
         .rule(RequiredString::new("digest", |e: &Visitor| &e.digest))
         .rule(RequiredString::new("digest_algo", |e: &Visitor| &e.digest_algo))
         .rule(OptionalNotBlank::new("country_code", |e: &Visitor| e.country_code.as_deref()))
-    // <<< CUSTOM RULES
-    // END CUSTOM RULES
 }
 
-// <<< CUSTOM
-// END CUSTOM

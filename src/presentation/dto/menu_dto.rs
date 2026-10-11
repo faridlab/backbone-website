@@ -339,7 +339,7 @@ impl backbone_core::ApplyUpdateDto<UpdateMenuDto> for Menu {
 // Custom DTOs
 // =============================================================================
 
-// <<< CUSTOM DTOs
 // Add custom DTOs specific to Menu here.
 // This section will be preserved during regeneration.
 // >>> END CUSTOM DTOs
+

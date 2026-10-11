@@ -27,5 +27,3 @@ pub use visitor_track_validator::{VisitorTrackValidator, visitor_track_validator
 pub use website_validator::{WebsiteValidator, website_validator};
 pub use website_member_validator::{WebsiteMemberValidator, website_member_validator};
 
-// <<< CUSTOM
-// END CUSTOM

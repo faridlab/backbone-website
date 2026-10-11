@@ -186,3 +186,4 @@ pub fn create_protected_website_routes<A: AuthMiddleware + Send + Sync + 'static
             }
         }))
 }
+

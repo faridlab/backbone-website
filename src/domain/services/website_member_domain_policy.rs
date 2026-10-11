@@ -18,5 +18,3 @@ use crate::domain::entity::WebsiteMember;
 /// service. `PermitAllPolicy` is the safe default until then.
 pub type WebsiteMemberDomainPolicy = PermitAllPolicy<WebsiteMember>;
 
-// <<< CUSTOM
-// END CUSTOM

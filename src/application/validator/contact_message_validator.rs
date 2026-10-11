@@ -18,9 +18,5 @@ pub fn contact_message_validator() -> ContactMessageValidator {
         .rule(OptionalNotBlank::new("name", |e: &ContactMessage| e.name.as_deref()))
         .rule(RequiredString::new("email", |e: &ContactMessage| &e.email))
         .rule(RequiredString::new("message", |e: &ContactMessage| &e.message))
-    // <<< CUSTOM RULES
-    // END CUSTOM RULES
 }
 
-// <<< CUSTOM
-// END CUSTOM

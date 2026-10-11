@@ -17,5 +17,3 @@ pub mod visitor_track_specification;
 pub mod website_specification;
 pub mod website_member_specification;
 
-// <<< CUSTOM
-// END CUSTOM

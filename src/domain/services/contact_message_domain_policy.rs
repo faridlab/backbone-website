@@ -18,5 +18,3 @@ use crate::domain::entity::ContactMessage;
 /// service. `PermitAllPolicy` is the safe default until then.
 pub type ContactMessageDomainPolicy = PermitAllPolicy<ContactMessage>;
 
-// <<< CUSTOM
-// END CUSTOM

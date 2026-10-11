@@ -186,3 +186,4 @@ pub fn create_protected_contact_message_routes<A: AuthMiddleware + Send + Sync +
             }
         }))
 }
+

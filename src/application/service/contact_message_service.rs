@@ -32,5 +32,3 @@ pub type ContactMessageService = GenericCrudService<
     ContactMessageRepository,
 >;
 
-// <<< CUSTOM
-// END CUSTOM

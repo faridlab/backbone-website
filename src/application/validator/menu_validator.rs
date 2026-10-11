@@ -17,9 +17,5 @@ pub fn menu_validator() -> MenuValidator {
     EntityValidator::new()
         .rule(RequiredString::new("name", |e: &Menu| &e.name))
         .rule(OptionalNotBlank::new("url", |e: &Menu| e.url.as_deref()))
-    // <<< CUSTOM RULES
-    // END CUSTOM RULES
 }
 
-// <<< CUSTOM
-// END CUSTOM

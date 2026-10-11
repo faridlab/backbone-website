@@ -11,8 +11,6 @@ use crate::domain::entity::MenuBlock;
 /// enum containing a `Crud(CrudEvent<MenuBlock>)` variant.
 pub type MenuBlockEvent = CrudEvent<MenuBlock>;
 
-// <<< CUSTOM
-// END CUSTOM
 
 use backbone_messaging::{CrudEventPublisher, NoOpCrudEventPublisher};
 use std::sync::Arc;

@@ -19,9 +19,5 @@ pub fn page_validator() -> PageValidator {
         .rule(RequiredString::new("url", |e: &Page| &e.url))
         .rule(RequiredString::new("title", |e: &Page| &e.title))
         .rule(OptionalNotBlank::new("seo_name", |e: &Page| e.seo_name.as_deref()))
-    // <<< CUSTOM RULES
-    // END CUSTOM RULES
 }
 
-// <<< CUSTOM
-// END CUSTOM

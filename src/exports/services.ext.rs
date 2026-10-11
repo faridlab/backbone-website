@@ -1,0 +1,54 @@
+//! The extension of `services.rs` (hand-written; ADR-0031).
+
+#[allow(unused_imports)]
+use super::*;
+
+// The module's public service artifacts, re-exported EXACTLY ONCE each
+// (the exports-first discipline; downstream crates hold the module to
+// these names — mirroring portal's PortalDocumentSurface shape).
+
+pub use crate::application::service::captcha_recaptcha::{
+    CaptchaProvider, CaptchaVerifier, RecaptchaClient, RecaptchaConfig,
+    WEBSITE_CAPTCHA_PROVIDER_ENV, WEBSITE_RECAPTCHA_SECRET_ENV, WEBSITE_RECAPTCHA_VERIFY_URL_ENV,
+};
+pub use crate::application::service::intake_contact::{ContactIntake, ContactMessageView, ContactPayload};
+pub use crate::application::service::intake_engine::{
+    IntakeContext, IntakeDeclaration, IntakeEngine, IntakeOutcome, IntakeRatePolicy,
+    TurnstileClient, TurnstileConfig,
+};
+pub use crate::application::service::lang_matcher::{
+    apply_matcher, MatchInput, MatcherAction, ResolveAnswer, MATCHER_TABLE,
+};
+pub use crate::application::service::menu_service::{MenuAdminService, MenuNode};
+pub use crate::application::service::notifier_port::{IntakeNotifier, UnwiredIntakeNotifier};
+pub use crate::application::service::page_service::{PageAdminService, PublicPage};
+pub use crate::application::service::principal_port::{
+    RefusingPrincipalVerifier, WebsitePrincipal, WebsitePrincipalVerifier,
+};
+pub use crate::application::service::redirect_service::{RedirectAdminService, RedirectPatch};
+pub use crate::application::service::slug::{slug_from, SlugId, SLUG_MAX};
+pub use crate::application::service::specificity::{
+    live_scope, prefer_specific, resolve_page_by_url, resolve_specific, Resolution, ResolvedPage,
+    ScopeFragment,
+};
+pub use crate::application::service::versioning_service::{
+    delete_generic_with_fanout, fork_to_website, FanoutDeletion, ForkOutcome,
+};
+pub use crate::application::service::visitor_gc::{
+    sweep_partnerless_visitors, SweepSummary, DEFAULT_GC_BATCH, DEFAULT_RETENTION_DAYS,
+};
+pub use crate::application::service::visitor_service::{
+    random_token, visitor_digest, SessionFacts, VisitorEngine, VisitorView, DIGEST_ALGO,
+};
+pub use crate::application::service::website_error::{map_unique_violation, WebsiteError};
+pub use crate::application::service::website_service::{
+    normalize_host, record_audit, ActorRef, CreateWebsiteInput, WebsiteConfigPatch,
+    WebsiteRootService, WebsiteView,
+};
+pub use crate::application::service::website_surface::{
+    PgWebsiteSurface, WebsiteSurface, WebsiteResult, RedirectKind,
+};
+// NOTE (one-site invariant): the generic-vs-specific fold (`website_id
+// IS NULL` predicate text and the `fn resolve_*` family) is defined
+// ONLY in src/application/service/specificity.rs; the re-exports above
+// point at it, never re-implement it.

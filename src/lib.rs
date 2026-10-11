@@ -24,8 +24,6 @@ pub mod application;
 pub mod presentation;
 pub mod seeders;
 pub mod exports;
-// <<< CUSTOM MODULES
-// END CUSTOM
 
 // Re-exports for convenience - Domain entities
 pub use domain::entity::*;
@@ -72,8 +70,6 @@ pub struct WebsiteModule {
     pub(crate) visitor_track_service: Arc<VisitorTrackService>,
     pub(crate) website_service: Arc<WebsiteService>,
     pub(crate) website_member_service: Arc<WebsiteMemberService>,
-    // <<< CUSTOM FIELDS
-    // END CUSTOM
 }
 
 impl WebsiteModule {
@@ -156,15 +152,11 @@ impl WebsiteModule {
             .merge(create_website_member_read_routes(self.website_member_service.clone()))
     }
 
-    // <<< CUSTOM METHODS
-    // END CUSTOM
 }
 
 /// Builder for WebsiteModule
 pub struct WebsiteModuleBuilder {
     db_pool: Option<PgPool>,
-    // <<< CUSTOM BUILDER FIELDS
-    // END CUSTOM
 }
 
 impl WebsiteModuleBuilder {
@@ -172,8 +164,6 @@ impl WebsiteModuleBuilder {
     pub fn new() -> Self {
         Self {
             db_pool: None,
-            // <<< CUSTOM BUILDER DEFAULTS
-            // END CUSTOM
         }
     }
 
@@ -183,8 +173,6 @@ impl WebsiteModuleBuilder {
         self
     }
 
-    // <<< CUSTOM - custom builder methods
-    // END CUSTOM
 
     /// Build the module with configured dependencies
     pub fn build(self) -> anyhow::Result<WebsiteModule> {
@@ -231,8 +219,6 @@ impl WebsiteModuleBuilder {
         let website_member_repository = Arc::new(WebsiteMemberRepository::new(db_pool.clone()));
         let website_member_service = Arc::new(WebsiteMemberService::with_repository(website_member_repository.clone()));
 
-        // <<< CUSTOM
-        // END CUSTOM
 
         Ok(WebsiteModule {
             contact_message_service,
@@ -245,8 +231,6 @@ impl WebsiteModuleBuilder {
             visitor_track_service,
             website_service,
             website_member_service,
-            // <<< CUSTOM
-            // END CUSTOM
         })
     }
 }

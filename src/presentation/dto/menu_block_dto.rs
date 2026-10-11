@@ -250,7 +250,7 @@ impl backbone_core::ApplyUpdateDto<UpdateMenuBlockDto> for MenuBlock {
 // Custom DTOs
 // =============================================================================
 
-// <<< CUSTOM DTOs
 // Add custom DTOs specific to MenuBlock here.
 // This section will be preserved during regeneration.
 // >>> END CUSTOM DTOs
+

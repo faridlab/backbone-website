@@ -18,5 +18,3 @@ use crate::domain::entity::Menu;
 /// service. `PermitAllPolicy` is the safe default until then.
 pub type MenuDomainPolicy = PermitAllPolicy<Menu>;
 
-// <<< CUSTOM
-// END CUSTOM

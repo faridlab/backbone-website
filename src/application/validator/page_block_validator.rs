@@ -14,10 +14,6 @@ pub type PageBlockValidator = EntityValidator<PageBlock>;
 /// Build a validator for PageBlock with all schema-defined field rules.
 pub fn page_block_validator() -> PageBlockValidator {
     EntityValidator::new()
-    // <<< CUSTOM RULES
-    // END CUSTOM RULES
         // No schema-derived rules — add custom rules above.
 }
 
-// <<< CUSTOM
-// END CUSTOM

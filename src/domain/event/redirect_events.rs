@@ -11,8 +11,6 @@ use crate::domain::entity::Redirect;
 /// enum containing a `Crud(CrudEvent<Redirect>)` variant.
 pub type RedirectEvent = CrudEvent<Redirect>;
 
-// <<< CUSTOM
-// END CUSTOM
 
 use backbone_messaging::{CrudEventPublisher, NoOpCrudEventPublisher};
 use std::sync::Arc;

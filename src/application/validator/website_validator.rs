@@ -20,9 +20,5 @@ pub fn website_validator() -> WebsiteValidator {
         .rule(RequiredString::new("default_lang_code", |e: &Website| &e.default_lang_code))
         .rule(RequiredString::new("homepage_url", |e: &Website| &e.homepage_url))
         .rule(OptionalNotBlank::new("robots_txt", |e: &Website| e.robots_txt.as_deref()))
-    // <<< CUSTOM RULES
-    // END CUSTOM RULES
 }
 
-// <<< CUSTOM
-// END CUSTOM

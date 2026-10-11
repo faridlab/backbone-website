@@ -32,5 +32,3 @@ pub type WebsiteMemberService = GenericCrudService<
     WebsiteMemberRepository,
 >;
 
-// <<< CUSTOM
-// END CUSTOM
