@@ -17,9 +17,6 @@ pub mod website_handler;
 pub mod website_member_handler;
 
 // <<< CUSTOM
-pub mod admin_routes;
-pub mod public_routes;
-pub mod tour_routes;
 // END CUSTOM
 
 // Re-exports
@@ -34,7 +31,7 @@ pub use visitor_track_handler::{create_visitor_track_routes, create_visitor_trac
 pub use website_handler::{create_website_routes, create_website_read_routes, create_website_write_routes};
 pub use website_member_handler::{create_website_member_routes, create_website_member_read_routes, create_website_member_write_routes};
 // <<< CUSTOM
-pub use admin_routes::{website_admin_routes, WebsiteAdminState, WebsiteActor};
-pub use public_routes::{website_public_routes, WebsitePublicState};
-pub use tour_routes::{tour_routes, TourPrincipalState};
 // END CUSTOM
+
+// This directory's extension (hand-written; ADR-0031).
+include!("mod.ext.rs");
