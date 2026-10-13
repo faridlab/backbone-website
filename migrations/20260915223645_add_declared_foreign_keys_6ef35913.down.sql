@@ -1,0 +1,9 @@
+-- Down: drop the declared foreign keys for website module
+ALTER TABLE IF EXISTS website.website_members DROP CONSTRAINT IF EXISTS fk_website_members_website_id;
+ALTER TABLE IF EXISTS website.visitor_tracks DROP CONSTRAINT IF EXISTS fk_visitor_tracks_visitor_id;
+ALTER TABLE IF EXISTS website.visitors DROP CONSTRAINT IF EXISTS fk_visitors_website_id;
+ALTER TABLE IF EXISTS website.redirects DROP CONSTRAINT IF EXISTS fk_redirects_website_id;
+ALTER TABLE IF EXISTS website.page_blocks DROP CONSTRAINT IF EXISTS fk_page_blocks_page_id;
+ALTER TABLE IF EXISTS website.menu_blocks DROP CONSTRAINT IF EXISTS fk_menu_blocks_menu_id;
+ALTER TABLE IF EXISTS website.menus DROP CONSTRAINT IF EXISTS fk_menus_website_id;
+ALTER TABLE IF EXISTS website.contact_messages DROP CONSTRAINT IF EXISTS fk_contact_messages_website_id;
