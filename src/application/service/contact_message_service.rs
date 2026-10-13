@@ -32,3 +32,57 @@ pub type ContactMessageService = GenericCrudService<
     ContactMessageRepository,
 >;
 
+/// The rules the schema declares for ContactMessage, checked against the row a create or update
+/// would store. The generated build attaches it to [`ContactMessageService`]. A refusing rule's
+/// break answers 422; a rule in shadow is logged under `backbone::write_guard` and the
+/// write goes ahead.
+pub struct ContactMessageRowRules;
+
+#[async_trait::async_trait]
+impl backbone_core::write_guard::WriteGuard<ContactMessage> for ContactMessageRowRules {
+    async fn check(
+        &self,
+        ctx: &backbone_core::write_guard::WriteCtx<'_, ContactMessage>,
+    ) -> backbone_core::write_guard::GuardOutcome {
+        use backbone_core::row_rule as r;
+        use backbone_core::violation::Violation;
+        use backbone_core::write_guard::{GuardOutcome, WriteKind};
+        let (create, update) = (ctx.kind == WriteKind::Create, ctx.kind == WriteKind::Update);
+        let Some(after) = ctx.after.filter(|_| create || update) else {
+            return GuardOutcome::allow();
+        };
+        let Ok(row) = serde_json::to_value(after) else {
+            return GuardOutcome::allow();
+        };
+        let row = &row;
+        let old = ctx.before.and_then(|b| serde_json::to_value(b).ok());
+        let mut shadow = Vec::new();
+        let mut refuse = Vec::new();
+        // `website_id_required` (@required on ContactMessage.website_id)
+        if (create || (update && r::changed(old.as_ref(), row, &["website_id"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "website_id")), r::not(r::is_empty(r::trim(r::field(row, "website_id")))))) {
+            refuse.push(Violation::new("website_id", "required", "website_id is required"));
+        }
+        // `name_max_length` (@max(120) on ContactMessage.name)
+        if (create || (update && r::changed(old.as_ref(), row, &["name"]))) && !r::holds(&r::le(r::length(r::field(row, "name")), r::Val::Num(120.0_f64))) {
+            shadow.push(Violation::new("name", "max_length", "name must be at most 120 characters").with_param("max", 120_i64));
+        }
+        // `email_required` (@required on ContactMessage.email)
+        if (create || (update && r::changed(old.as_ref(), row, &["email"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "email")), r::not(r::is_empty(r::trim(r::field(row, "email")))))) {
+            refuse.push(Violation::new("email", "required", "email is required"));
+        }
+        // `email_max_length` (@max(320) on ContactMessage.email)
+        if (create || (update && r::changed(old.as_ref(), row, &["email"]))) && !r::holds(&r::le(r::length(r::field(row, "email")), r::Val::Num(320.0_f64))) {
+            shadow.push(Violation::new("email", "max_length", "email must be at most 320 characters").with_param("max", 320_i64));
+        }
+        // `message_required` (@required on ContactMessage.message)
+        if (create || (update && r::changed(old.as_ref(), row, &["message"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "message")), r::not(r::is_empty(r::trim(r::field(row, "message")))))) {
+            refuse.push(Violation::new("message", "required", "message is required"));
+        }
+        // `message_max_length` (@max(5000) on ContactMessage.message)
+        if (create || (update && r::changed(old.as_ref(), row, &["message"]))) && !r::holds(&r::le(r::length(r::field(row, "message")), r::Val::Num(5000.0_f64))) {
+            shadow.push(Violation::new("message", "max_length", "message must be at most 5000 characters").with_param("max", 5000_i64));
+        }
+        GuardOutcome { refuse, shadow }
+    }
+}
+

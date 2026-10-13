@@ -32,3 +32,45 @@ pub type VisitorTrackService = GenericCrudService<
     VisitorTrackRepository,
 >;
 
+/// The rules the schema declares for VisitorTrack, checked against the row a create or update
+/// would store. The generated build attaches it to [`VisitorTrackService`]. A refusing rule's
+/// break answers 422; a rule in shadow is logged under `backbone::write_guard` and the
+/// write goes ahead.
+pub struct VisitorTrackRowRules;
+
+#[async_trait::async_trait]
+impl backbone_core::write_guard::WriteGuard<VisitorTrack> for VisitorTrackRowRules {
+    async fn check(
+        &self,
+        ctx: &backbone_core::write_guard::WriteCtx<'_, VisitorTrack>,
+    ) -> backbone_core::write_guard::GuardOutcome {
+        use backbone_core::row_rule as r;
+        use backbone_core::violation::Violation;
+        use backbone_core::write_guard::{GuardOutcome, WriteKind};
+        let (create, update) = (ctx.kind == WriteKind::Create, ctx.kind == WriteKind::Update);
+        let Some(after) = ctx.after.filter(|_| create || update) else {
+            return GuardOutcome::allow();
+        };
+        let Ok(row) = serde_json::to_value(after) else {
+            return GuardOutcome::allow();
+        };
+        let row = &row;
+        let old = ctx.before.and_then(|b| serde_json::to_value(b).ok());
+        let mut shadow = Vec::new();
+        let mut refuse = Vec::new();
+        // `visitor_id_required` (@required on VisitorTrack.visitor_id)
+        if (create || (update && r::changed(old.as_ref(), row, &["visitor_id"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "visitor_id")), r::not(r::is_empty(r::trim(r::field(row, "visitor_id")))))) {
+            refuse.push(Violation::new("visitor_id", "required", "visitor_id is required"));
+        }
+        // `url_required` (@required on VisitorTrack.url)
+        if (create || (update && r::changed(old.as_ref(), row, &["url"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "url")), r::not(r::is_empty(r::trim(r::field(row, "url")))))) {
+            refuse.push(Violation::new("url", "required", "url is required"));
+        }
+        // `url_max_length` (@max(500) on VisitorTrack.url)
+        if (create || (update && r::changed(old.as_ref(), row, &["url"]))) && !r::holds(&r::le(r::length(r::field(row, "url")), r::Val::Num(500.0_f64))) {
+            shadow.push(Violation::new("url", "max_length", "url must be at most 500 characters").with_param("max", 500_i64));
+        }
+        GuardOutcome { refuse, shadow }
+    }
+}
+

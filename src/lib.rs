@@ -181,43 +181,43 @@ impl WebsiteModuleBuilder {
 
         // ContactMessage service
         let contact_message_repository = Arc::new(ContactMessageRepository::new(db_pool.clone()));
-        let contact_message_service = Arc::new(ContactMessageService::with_repository(contact_message_repository.clone()));
+        let contact_message_service = Arc::new(ContactMessageService::with_repository(contact_message_repository.clone()).with_guard(Arc::new(crate::application::service::ContactMessageRowRules)));
 
         // Menu service
         let menu_repository = Arc::new(MenuRepository::new(db_pool.clone()));
-        let menu_service = Arc::new(MenuService::with_repository(menu_repository.clone()));
+        let menu_service = Arc::new(MenuService::with_repository(menu_repository.clone()).with_guard(Arc::new(crate::application::service::MenuRowRules)));
 
         // MenuBlock service
         let menu_block_repository = Arc::new(MenuBlockRepository::new(db_pool.clone()));
-        let menu_block_service = Arc::new(MenuBlockService::with_repository(menu_block_repository.clone()));
+        let menu_block_service = Arc::new(MenuBlockService::with_repository(menu_block_repository.clone()).with_guard(Arc::new(crate::application::service::MenuBlockRowRules)));
 
         // Page service
         let page_repository = Arc::new(PageRepository::new(db_pool.clone()));
-        let page_service = Arc::new(PageService::with_repository(page_repository.clone()));
+        let page_service = Arc::new(PageService::with_repository(page_repository.clone()).with_guard(Arc::new(crate::application::service::PageRowRules)));
 
         // PageBlock service
         let page_block_repository = Arc::new(PageBlockRepository::new(db_pool.clone()));
-        let page_block_service = Arc::new(PageBlockService::with_repository(page_block_repository.clone()));
+        let page_block_service = Arc::new(PageBlockService::with_repository(page_block_repository.clone()).with_guard(Arc::new(crate::application::service::PageBlockRowRules)));
 
         // Redirect service
         let redirect_repository = Arc::new(RedirectRepository::new(db_pool.clone()));
-        let redirect_service = Arc::new(RedirectService::with_repository(redirect_repository.clone()));
+        let redirect_service = Arc::new(RedirectService::with_repository(redirect_repository.clone()).with_guard(Arc::new(crate::application::service::RedirectRowRules)));
 
         // Visitor service
         let visitor_repository = Arc::new(VisitorRepository::new(db_pool.clone()));
-        let visitor_service = Arc::new(VisitorService::with_repository(visitor_repository.clone()));
+        let visitor_service = Arc::new(VisitorService::with_repository(visitor_repository.clone()).with_guard(Arc::new(crate::application::service::VisitorRowRules)));
 
         // VisitorTrack service
         let visitor_track_repository = Arc::new(VisitorTrackRepository::new(db_pool.clone()));
-        let visitor_track_service = Arc::new(VisitorTrackService::with_repository(visitor_track_repository.clone()));
+        let visitor_track_service = Arc::new(VisitorTrackService::with_repository(visitor_track_repository.clone()).with_guard(Arc::new(crate::application::service::VisitorTrackRowRules)));
 
         // Website service
         let website_repository = Arc::new(WebsiteRepository::new(db_pool.clone()));
-        let website_service = Arc::new(WebsiteService::with_repository(website_repository.clone()));
+        let website_service = Arc::new(WebsiteService::with_repository(website_repository.clone()).with_guard(Arc::new(crate::application::service::WebsiteRowRules)));
 
         // WebsiteMember service
         let website_member_repository = Arc::new(WebsiteMemberRepository::new(db_pool.clone()));
-        let website_member_service = Arc::new(WebsiteMemberService::with_repository(website_member_repository.clone()));
+        let website_member_service = Arc::new(WebsiteMemberService::with_repository(website_member_repository.clone()).with_guard(Arc::new(crate::application::service::WebsiteMemberRowRules)));
 
 
         Ok(WebsiteModule {
