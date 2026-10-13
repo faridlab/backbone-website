@@ -29,7 +29,7 @@ impl backbone_core::write_guard::WriteGuard<Menu> for MenuRowRules {
         };
         let row = &row;
         let old = ctx.before.and_then(|b| serde_json::to_value(b).ok());
-        let mut shadow = Vec::new();
+        let shadow = Vec::new();
         let mut refuse = Vec::new();
         // `website_id_required` (@required on Menu.website_id)
         if (create || (update && r::changed(old.as_ref(), row, &["website_id"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "website_id")), r::not(r::is_empty(r::trim(r::field(row, "website_id")))))) {
@@ -41,11 +41,11 @@ impl backbone_core::write_guard::WriteGuard<Menu> for MenuRowRules {
         }
         // `name_max_length` (@max(120) on Menu.name)
         if (create || (update && r::changed(old.as_ref(), row, &["name"]))) && !r::holds(&r::le(r::length(r::field(row, "name")), r::Val::Num(120.0_f64))) {
-            shadow.push(Violation::new("name", "max_length", "name must be at most 120 characters").with_param("max", 120_i64));
+            refuse.push(Violation::new("name", "max_length", "name must be at most 120 characters").with_param("max", 120_i64));
         }
         // `url_max_length` (@max(500) on Menu.url)
         if (create || (update && r::changed(old.as_ref(), row, &["url"]))) && !r::holds(&r::le(r::length(r::field(row, "url")), r::Val::Num(500.0_f64))) {
-            shadow.push(Violation::new("url", "max_length", "url must be at most 500 characters").with_param("max", 500_i64));
+            refuse.push(Violation::new("url", "max_length", "url must be at most 500 characters").with_param("max", 500_i64));
         }
         GuardOutcome { refuse, shadow }
     }

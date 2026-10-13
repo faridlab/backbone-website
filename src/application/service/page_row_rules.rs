@@ -29,7 +29,7 @@ impl backbone_core::write_guard::WriteGuard<Page> for PageRowRules {
         };
         let row = &row;
         let old = ctx.before.and_then(|b| serde_json::to_value(b).ok());
-        let mut shadow = Vec::new();
+        let shadow = Vec::new();
         let mut refuse = Vec::new();
         // `key_required` (@required on Page.key)
         if (create || (update && r::changed(old.as_ref(), row, &["key"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "key")), r::not(r::is_empty(r::trim(r::field(row, "key")))))) {
@@ -37,7 +37,7 @@ impl backbone_core::write_guard::WriteGuard<Page> for PageRowRules {
         }
         // `key_max_length` (@max(120) on Page.key)
         if (create || (update && r::changed(old.as_ref(), row, &["key"]))) && !r::holds(&r::le(r::length(r::field(row, "key")), r::Val::Num(120.0_f64))) {
-            shadow.push(Violation::new("key", "max_length", "key must be at most 120 characters").with_param("max", 120_i64));
+            refuse.push(Violation::new("key", "max_length", "key must be at most 120 characters").with_param("max", 120_i64));
         }
         // `url_required` (@required on Page.url)
         if (create || (update && r::changed(old.as_ref(), row, &["url"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "url")), r::not(r::is_empty(r::trim(r::field(row, "url")))))) {
@@ -45,7 +45,7 @@ impl backbone_core::write_guard::WriteGuard<Page> for PageRowRules {
         }
         // `url_max_length` (@max(500) on Page.url)
         if (create || (update && r::changed(old.as_ref(), row, &["url"]))) && !r::holds(&r::le(r::length(r::field(row, "url")), r::Val::Num(500.0_f64))) {
-            shadow.push(Violation::new("url", "max_length", "url must be at most 500 characters").with_param("max", 500_i64));
+            refuse.push(Violation::new("url", "max_length", "url must be at most 500 characters").with_param("max", 500_i64));
         }
         // `title_required` (@required on Page.title)
         if (create || (update && r::changed(old.as_ref(), row, &["title"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "title")), r::not(r::is_empty(r::trim(r::field(row, "title")))))) {
@@ -53,11 +53,11 @@ impl backbone_core::write_guard::WriteGuard<Page> for PageRowRules {
         }
         // `title_max_length` (@max(200) on Page.title)
         if (create || (update && r::changed(old.as_ref(), row, &["title"]))) && !r::holds(&r::le(r::length(r::field(row, "title")), r::Val::Num(200.0_f64))) {
-            shadow.push(Violation::new("title", "max_length", "title must be at most 200 characters").with_param("max", 200_i64));
+            refuse.push(Violation::new("title", "max_length", "title must be at most 200 characters").with_param("max", 200_i64));
         }
         // `seo_name_max_length` (@max(120) on Page.seo_name)
         if (create || (update && r::changed(old.as_ref(), row, &["seo_name"]))) && !r::holds(&r::le(r::length(r::field(row, "seo_name")), r::Val::Num(120.0_f64))) {
-            shadow.push(Violation::new("seo_name", "max_length", "seo_name must be at most 120 characters").with_param("max", 120_i64));
+            refuse.push(Violation::new("seo_name", "max_length", "seo_name must be at most 120 characters").with_param("max", 120_i64));
         }
         GuardOutcome { refuse, shadow }
     }

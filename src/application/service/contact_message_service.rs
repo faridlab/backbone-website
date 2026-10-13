@@ -56,7 +56,7 @@ impl backbone_core::write_guard::WriteGuard<ContactMessage> for ContactMessageRo
         };
         let row = &row;
         let old = ctx.before.and_then(|b| serde_json::to_value(b).ok());
-        let mut shadow = Vec::new();
+        let shadow = Vec::new();
         let mut refuse = Vec::new();
         // `website_id_required` (@required on ContactMessage.website_id)
         if (create || (update && r::changed(old.as_ref(), row, &["website_id"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "website_id")), r::not(r::is_empty(r::trim(r::field(row, "website_id")))))) {
@@ -64,7 +64,7 @@ impl backbone_core::write_guard::WriteGuard<ContactMessage> for ContactMessageRo
         }
         // `name_max_length` (@max(120) on ContactMessage.name)
         if (create || (update && r::changed(old.as_ref(), row, &["name"]))) && !r::holds(&r::le(r::length(r::field(row, "name")), r::Val::Num(120.0_f64))) {
-            shadow.push(Violation::new("name", "max_length", "name must be at most 120 characters").with_param("max", 120_i64));
+            refuse.push(Violation::new("name", "max_length", "name must be at most 120 characters").with_param("max", 120_i64));
         }
         // `email_required` (@required on ContactMessage.email)
         if (create || (update && r::changed(old.as_ref(), row, &["email"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "email")), r::not(r::is_empty(r::trim(r::field(row, "email")))))) {
@@ -72,7 +72,7 @@ impl backbone_core::write_guard::WriteGuard<ContactMessage> for ContactMessageRo
         }
         // `email_max_length` (@max(320) on ContactMessage.email)
         if (create || (update && r::changed(old.as_ref(), row, &["email"]))) && !r::holds(&r::le(r::length(r::field(row, "email")), r::Val::Num(320.0_f64))) {
-            shadow.push(Violation::new("email", "max_length", "email must be at most 320 characters").with_param("max", 320_i64));
+            refuse.push(Violation::new("email", "max_length", "email must be at most 320 characters").with_param("max", 320_i64));
         }
         // `message_required` (@required on ContactMessage.message)
         if (create || (update && r::changed(old.as_ref(), row, &["message"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "message")), r::not(r::is_empty(r::trim(r::field(row, "message")))))) {
@@ -80,7 +80,7 @@ impl backbone_core::write_guard::WriteGuard<ContactMessage> for ContactMessageRo
         }
         // `message_max_length` (@max(5000) on ContactMessage.message)
         if (create || (update && r::changed(old.as_ref(), row, &["message"]))) && !r::holds(&r::le(r::length(r::field(row, "message")), r::Val::Num(5000.0_f64))) {
-            shadow.push(Violation::new("message", "max_length", "message must be at most 5000 characters").with_param("max", 5000_i64));
+            refuse.push(Violation::new("message", "max_length", "message must be at most 5000 characters").with_param("max", 5000_i64));
         }
         GuardOutcome { refuse, shadow }
     }

@@ -29,7 +29,7 @@ impl backbone_core::write_guard::WriteGuard<Redirect> for RedirectRowRules {
         };
         let row = &row;
         let old = ctx.before.and_then(|b| serde_json::to_value(b).ok());
-        let mut shadow = Vec::new();
+        let shadow = Vec::new();
         let mut refuse = Vec::new();
         // `website_id_required` (@required on Redirect.website_id)
         if (create || (update && r::changed(old.as_ref(), row, &["website_id"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "website_id")), r::not(r::is_empty(r::trim(r::field(row, "website_id")))))) {
@@ -41,15 +41,15 @@ impl backbone_core::write_guard::WriteGuard<Redirect> for RedirectRowRules {
         }
         // `url_from_max_length` (@max(500) on Redirect.url_from)
         if (create || (update && r::changed(old.as_ref(), row, &["url_from"]))) && !r::holds(&r::le(r::length(r::field(row, "url_from")), r::Val::Num(500.0_f64))) {
-            shadow.push(Violation::new("url_from", "max_length", "url_from must be at most 500 characters").with_param("max", 500_i64));
+            refuse.push(Violation::new("url_from", "max_length", "url_from must be at most 500 characters").with_param("max", 500_i64));
         }
         // `url_to_max_length` (@max(500) on Redirect.url_to)
         if (create || (update && r::changed(old.as_ref(), row, &["url_to"]))) && !r::holds(&r::le(r::length(r::field(row, "url_to")), r::Val::Num(500.0_f64))) {
-            shadow.push(Violation::new("url_to", "max_length", "url_to must be at most 500 characters").with_param("max", 500_i64));
+            refuse.push(Violation::new("url_to", "max_length", "url_to must be at most 500 characters").with_param("max", 500_i64));
         }
         // `description_max_length` (@max(500) on Redirect.description)
         if (create || (update && r::changed(old.as_ref(), row, &["description"]))) && !r::holds(&r::le(r::length(r::field(row, "description")), r::Val::Num(500.0_f64))) {
-            shadow.push(Violation::new("description", "max_length", "description must be at most 500 characters").with_param("max", 500_i64));
+            refuse.push(Violation::new("description", "max_length", "description must be at most 500 characters").with_param("max", 500_i64));
         }
         GuardOutcome { refuse, shadow }
     }

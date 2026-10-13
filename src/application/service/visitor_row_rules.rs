@@ -29,7 +29,7 @@ impl backbone_core::write_guard::WriteGuard<Visitor> for VisitorRowRules {
         };
         let row = &row;
         let old = ctx.before.and_then(|b| serde_json::to_value(b).ok());
-        let mut shadow = Vec::new();
+        let shadow = Vec::new();
         let mut refuse = Vec::new();
         // `website_id_required` (@required on Visitor.website_id)
         if (create || (update && r::changed(old.as_ref(), row, &["website_id"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "website_id")), r::not(r::is_empty(r::trim(r::field(row, "website_id")))))) {
@@ -41,7 +41,7 @@ impl backbone_core::write_guard::WriteGuard<Visitor> for VisitorRowRules {
         }
         // `access_token_max_length` (@max(64) on Visitor.access_token)
         if (create || (update && r::changed(old.as_ref(), row, &["access_token"]))) && !r::holds(&r::le(r::length(r::field(row, "access_token")), r::Val::Num(64.0_f64))) {
-            shadow.push(Violation::new("access_token", "max_length", "access_token must be at most 64 characters").with_param("max", 64_i64));
+            refuse.push(Violation::new("access_token", "max_length", "access_token must be at most 64 characters").with_param("max", 64_i64));
         }
         // `digest_required` (@required on Visitor.digest)
         if (create || (update && r::changed(old.as_ref(), row, &["digest"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "digest")), r::not(r::is_empty(r::trim(r::field(row, "digest")))))) {
@@ -49,15 +49,15 @@ impl backbone_core::write_guard::WriteGuard<Visitor> for VisitorRowRules {
         }
         // `digest_max_length` (@max(128) on Visitor.digest)
         if (create || (update && r::changed(old.as_ref(), row, &["digest"]))) && !r::holds(&r::le(r::length(r::field(row, "digest")), r::Val::Num(128.0_f64))) {
-            shadow.push(Violation::new("digest", "max_length", "digest must be at most 128 characters").with_param("max", 128_i64));
+            refuse.push(Violation::new("digest", "max_length", "digest must be at most 128 characters").with_param("max", 128_i64));
         }
         // `digest_algo_max_length` (@max(32) on Visitor.digest_algo)
         if (create || (update && r::changed(old.as_ref(), row, &["digest_algo"]))) && !r::holds(&r::le(r::length(r::field(row, "digest_algo")), r::Val::Num(32.0_f64))) {
-            shadow.push(Violation::new("digest_algo", "max_length", "digest_algo must be at most 32 characters").with_param("max", 32_i64));
+            refuse.push(Violation::new("digest_algo", "max_length", "digest_algo must be at most 32 characters").with_param("max", 32_i64));
         }
         // `country_code_max_length` (@max(2) on Visitor.country_code)
         if (create || (update && r::changed(old.as_ref(), row, &["country_code"]))) && !r::holds(&r::le(r::length(r::field(row, "country_code")), r::Val::Num(2.0_f64))) {
-            shadow.push(Violation::new("country_code", "max_length", "country_code must be at most 2 characters").with_param("max", 2_i64));
+            refuse.push(Violation::new("country_code", "max_length", "country_code must be at most 2 characters").with_param("max", 2_i64));
         }
         GuardOutcome { refuse, shadow }
     }

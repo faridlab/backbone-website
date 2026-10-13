@@ -29,7 +29,7 @@ impl backbone_core::write_guard::WriteGuard<Website> for WebsiteRowRules {
         };
         let row = &row;
         let old = ctx.before.and_then(|b| serde_json::to_value(b).ok());
-        let mut shadow = Vec::new();
+        let shadow = Vec::new();
         let mut refuse = Vec::new();
         // `name_required` (@required on Website.name)
         if (create || (update && r::changed(old.as_ref(), row, &["name"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "name")), r::not(r::is_empty(r::trim(r::field(row, "name")))))) {
@@ -37,11 +37,11 @@ impl backbone_core::write_guard::WriteGuard<Website> for WebsiteRowRules {
         }
         // `name_max_length` (@max(120) on Website.name)
         if (create || (update && r::changed(old.as_ref(), row, &["name"]))) && !r::holds(&r::le(r::length(r::field(row, "name")), r::Val::Num(120.0_f64))) {
-            shadow.push(Violation::new("name", "max_length", "name must be at most 120 characters").with_param("max", 120_i64));
+            refuse.push(Violation::new("name", "max_length", "name must be at most 120 characters").with_param("max", 120_i64));
         }
         // `domain_max_length` (@max(255) on Website.domain)
         if (create || (update && r::changed(old.as_ref(), row, &["domain"]))) && !r::holds(&r::le(r::length(r::field(row, "domain")), r::Val::Num(255.0_f64))) {
-            shadow.push(Violation::new("domain", "max_length", "domain must be at most 255 characters").with_param("max", 255_i64));
+            refuse.push(Violation::new("domain", "max_length", "domain must be at most 255 characters").with_param("max", 255_i64));
         }
         // `public_user_id_required` (@required on Website.public_user_id)
         if (create || (update && r::changed(old.as_ref(), row, &["public_user_id"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "public_user_id")), r::not(r::is_empty(r::trim(r::field(row, "public_user_id")))))) {
@@ -49,11 +49,11 @@ impl backbone_core::write_guard::WriteGuard<Website> for WebsiteRowRules {
         }
         // `default_lang_code_max_length` (@max(8) on Website.default_lang_code)
         if (create || (update && r::changed(old.as_ref(), row, &["default_lang_code"]))) && !r::holds(&r::le(r::length(r::field(row, "default_lang_code")), r::Val::Num(8.0_f64))) {
-            shadow.push(Violation::new("default_lang_code", "max_length", "default_lang_code must be at most 8 characters").with_param("max", 8_i64));
+            refuse.push(Violation::new("default_lang_code", "max_length", "default_lang_code must be at most 8 characters").with_param("max", 8_i64));
         }
         // `homepage_url_max_length` (@max(500) on Website.homepage_url)
         if (create || (update && r::changed(old.as_ref(), row, &["homepage_url"]))) && !r::holds(&r::le(r::length(r::field(row, "homepage_url")), r::Val::Num(500.0_f64))) {
-            shadow.push(Violation::new("homepage_url", "max_length", "homepage_url must be at most 500 characters").with_param("max", 500_i64));
+            refuse.push(Violation::new("homepage_url", "max_length", "homepage_url must be at most 500 characters").with_param("max", 500_i64));
         }
         GuardOutcome { refuse, shadow }
     }
