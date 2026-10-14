@@ -1,6 +1,6 @@
 [package]
 name = "backbone-website"
-version = "0.9.0"
+version = "0.10.0"
 edition = "2021"
 description = "Headless website engine — per-website pages/menus with ONE generic-vs-specific resolver backed by real COALESCE-sentinel unique constraints, explicit copy-on-write/copy-on-unlink versioning verbs with provenance, the stored+derived+fenced publish contract, GDPR-shaped visitors (keyed digest, random tokens, no raw IP), turnstile-gated declared intake verbs, the SEO redirect table + table-driven routing matcher, and a declared public read allowlist with negative-enumeration posture (Odoo website port; rendering stays in the webapps)"
 license = "MIT OR Apache-2.0"
@@ -41,7 +41,7 @@ backbone-messaging = { version = "3.0.0" }
 # portal.portal_users(id), logical refs). Pinned tag-equal like every
 # sibling dep.
 backbone-auditlog = { version = "0.5.0" }
-backbone-portal = { version = "0.8.0" }
+backbone-portal = { version = "0.9.0" }
 
 # Sibling modules NOT consumed by design — recorded here so no later seat
 # adds them casually:
