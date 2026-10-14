@@ -181,43 +181,43 @@ impl WebsiteModuleBuilder {
 
         // ContactMessage service
         let contact_message_repository = Arc::new(ContactMessageRepository::new(db_pool.clone()));
-        let contact_message_service = Arc::new(ContactMessageService::with_repository(contact_message_repository.clone()).with_guard(Arc::new(crate::application::service::ContactMessageRowRules)));
+        let contact_message_service = Arc::new(crate::application::service::build_contact_message_service(contact_message_repository.clone()));
 
         // Menu service
         let menu_repository = Arc::new(MenuRepository::new(db_pool.clone()));
-        let menu_service = Arc::new(MenuService::with_repository(menu_repository.clone()).with_guard(Arc::new(crate::application::service::MenuRowRules)));
+        let menu_service = Arc::new(crate::application::service::build_menu_service(menu_repository.clone()));
 
         // MenuBlock service
         let menu_block_repository = Arc::new(MenuBlockRepository::new(db_pool.clone()));
-        let menu_block_service = Arc::new(MenuBlockService::with_repository(menu_block_repository.clone()).with_guard(Arc::new(crate::application::service::MenuBlockRowRules)));
+        let menu_block_service = Arc::new(crate::application::service::build_menu_block_service(menu_block_repository.clone()));
 
         // Page service
         let page_repository = Arc::new(PageRepository::new(db_pool.clone()));
-        let page_service = Arc::new(PageService::with_repository(page_repository.clone()).with_guard(Arc::new(crate::application::service::PageRowRules)));
+        let page_service = Arc::new(crate::application::service::build_page_service(page_repository.clone()));
 
         // PageBlock service
         let page_block_repository = Arc::new(PageBlockRepository::new(db_pool.clone()));
-        let page_block_service = Arc::new(PageBlockService::with_repository(page_block_repository.clone()).with_guard(Arc::new(crate::application::service::PageBlockRowRules)));
+        let page_block_service = Arc::new(crate::application::service::build_page_block_service(page_block_repository.clone()));
 
         // Redirect service
         let redirect_repository = Arc::new(RedirectRepository::new(db_pool.clone()));
-        let redirect_service = Arc::new(RedirectService::with_repository(redirect_repository.clone()).with_guard(Arc::new(crate::application::service::RedirectRowRules)));
+        let redirect_service = Arc::new(crate::application::service::build_redirect_service(redirect_repository.clone()));
 
         // Visitor service
         let visitor_repository = Arc::new(VisitorRepository::new(db_pool.clone()));
-        let visitor_service = Arc::new(VisitorService::with_repository(visitor_repository.clone()).with_guard(Arc::new(crate::application::service::VisitorRowRules)));
+        let visitor_service = Arc::new(crate::application::service::build_visitor_service(visitor_repository.clone()));
 
         // VisitorTrack service
         let visitor_track_repository = Arc::new(VisitorTrackRepository::new(db_pool.clone()));
-        let visitor_track_service = Arc::new(VisitorTrackService::with_repository(visitor_track_repository.clone()).with_guard(Arc::new(crate::application::service::VisitorTrackRowRules)));
+        let visitor_track_service = Arc::new(crate::application::service::build_visitor_track_service(visitor_track_repository.clone()));
 
         // Website service
         let website_repository = Arc::new(WebsiteRepository::new(db_pool.clone()));
-        let website_service = Arc::new(WebsiteService::with_repository(website_repository.clone()).with_guard(Arc::new(crate::application::service::WebsiteRowRules)));
+        let website_service = Arc::new(crate::application::service::build_website_service(website_repository.clone()));
 
         // WebsiteMember service
         let website_member_repository = Arc::new(WebsiteMemberRepository::new(db_pool.clone()));
-        let website_member_service = Arc::new(WebsiteMemberService::with_repository(website_member_repository.clone()).with_guard(Arc::new(crate::application::service::WebsiteMemberRowRules)));
+        let website_member_service = Arc::new(crate::application::service::build_website_member_service(website_member_repository.clone()));
 
 
         Ok(WebsiteModule {

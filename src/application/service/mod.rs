@@ -45,5 +45,85 @@ pub mod website_row_rules;
 pub use website_row_rules::WebsiteRowRules;
 pub use website_member_service::WebsiteMemberRowRules;
 
+/// A `ContactMessageService` over `repository` with its write guard attached: the way to build it, so its writes are
+/// served only with the rules the schema declares.
+pub fn build_contact_message_service(
+    repository: std::sync::Arc<crate::infrastructure::persistence::ContactMessageRepository>,
+) -> ContactMessageService {
+    ContactMessageService::with_repository(repository).with_guard(std::sync::Arc::new(ContactMessageRowRules))
+}
+
+/// A `MenuService` over `repository` with its write guard attached: the way to build it, so its writes are
+/// served only with the rules the schema declares.
+pub fn build_menu_service(
+    repository: std::sync::Arc<crate::infrastructure::persistence::MenuRepository>,
+) -> MenuService {
+    MenuService::with_repository(repository).with_guard(std::sync::Arc::new(MenuRowRules))
+}
+
+/// A `MenuBlockService` over `repository` with its write guard attached: the way to build it, so its writes are
+/// served only with the rules the schema declares.
+pub fn build_menu_block_service(
+    repository: std::sync::Arc<crate::infrastructure::persistence::MenuBlockRepository>,
+) -> MenuBlockService {
+    MenuBlockService::with_repository(repository).with_guard(std::sync::Arc::new(MenuBlockRowRules))
+}
+
+/// A `PageService` over `repository` with its write guard attached: the way to build it, so its writes are
+/// served only with the rules the schema declares.
+pub fn build_page_service(
+    repository: std::sync::Arc<crate::infrastructure::persistence::PageRepository>,
+) -> PageService {
+    PageService::with_repository(repository).with_guard(std::sync::Arc::new(PageRowRules))
+}
+
+/// A `PageBlockService` over `repository` with its write guard attached: the way to build it, so its writes are
+/// served only with the rules the schema declares.
+pub fn build_page_block_service(
+    repository: std::sync::Arc<crate::infrastructure::persistence::PageBlockRepository>,
+) -> PageBlockService {
+    PageBlockService::with_repository(repository).with_guard(std::sync::Arc::new(PageBlockRowRules))
+}
+
+/// A `RedirectService` over `repository` with its write guard attached: the way to build it, so its writes are
+/// served only with the rules the schema declares.
+pub fn build_redirect_service(
+    repository: std::sync::Arc<crate::infrastructure::persistence::RedirectRepository>,
+) -> RedirectService {
+    RedirectService::with_repository(repository).with_guard(std::sync::Arc::new(RedirectRowRules))
+}
+
+/// A `VisitorService` over `repository` with its write guard attached: the way to build it, so its writes are
+/// served only with the rules the schema declares.
+pub fn build_visitor_service(
+    repository: std::sync::Arc<crate::infrastructure::persistence::VisitorRepository>,
+) -> VisitorService {
+    VisitorService::with_repository(repository).with_guard(std::sync::Arc::new(VisitorRowRules))
+}
+
+/// A `VisitorTrackService` over `repository` with its write guard attached: the way to build it, so its writes are
+/// served only with the rules the schema declares.
+pub fn build_visitor_track_service(
+    repository: std::sync::Arc<crate::infrastructure::persistence::VisitorTrackRepository>,
+) -> VisitorTrackService {
+    VisitorTrackService::with_repository(repository).with_guard(std::sync::Arc::new(VisitorTrackRowRules))
+}
+
+/// A `WebsiteService` over `repository` with its write guard attached: the way to build it, so its writes are
+/// served only with the rules the schema declares.
+pub fn build_website_service(
+    repository: std::sync::Arc<crate::infrastructure::persistence::WebsiteRepository>,
+) -> WebsiteService {
+    WebsiteService::with_repository(repository).with_guard(std::sync::Arc::new(WebsiteRowRules))
+}
+
+/// A `WebsiteMemberService` over `repository` with its write guard attached: the way to build it, so its writes are
+/// served only with the rules the schema declares.
+pub fn build_website_member_service(
+    repository: std::sync::Arc<crate::infrastructure::persistence::WebsiteMemberRepository>,
+) -> WebsiteMemberService {
+    WebsiteMemberService::with_repository(repository).with_guard(std::sync::Arc::new(WebsiteMemberRowRules))
+}
+
 // This directory's extension (hand-written; ADR-0031).
 include!("mod.ext.rs");
