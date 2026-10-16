@@ -496,7 +496,6 @@ dependencies = [
  "backbone-auditlog",
  "backbone-auth",
  "backbone-core",
- "backbone-messaging",
  "backbone-orm",
  "backbone-portal",
  "backbone-rate-limit",

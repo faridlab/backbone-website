@@ -5,7 +5,6 @@
 pub mod entity;
 pub mod repositories;
 pub mod services;
-pub mod event;
 
 // Re-export commonly used types
 pub use repositories::*;

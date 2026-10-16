@@ -238,8 +238,6 @@ impl Page {
         }
     }
 
-    // <<< CUSTOM METHODS START >>>
-    // <<< CUSTOM METHODS END >>>
 }
 
 impl super::Entity for Page {
@@ -255,6 +253,9 @@ impl super::Entity for Page {
 }
 
 impl backbone_core::PersistentEntity for Page {
+    fn write_protected_fields() -> &'static [&'static str] {
+        &["visibility"]
+    }
     fn entity_id(&self) -> String {
         self.id.to_string()
     }
@@ -289,6 +290,8 @@ impl backbone_orm::EntityRepoMeta for Page {
         m.insert("id".to_string(), "uuid".to_string());
         m.insert("website_id".to_string(), "uuid".to_string());
         m.insert("visibility".to_string(), "website_visibility".to_string());
+        m.insert("date_publish".to_string(), "timestamptz".to_string());
+        m.insert("forked_at".to_string(), "timestamptz".to_string());
         m
     }
     fn search_fields() -> &'static [&'static str] {
@@ -375,7 +378,7 @@ impl PageBuilder {
         self
     }
 
-    /// Set the required_member_roles field (default: `serde_json::json!({})`)
+    /// Set the required_member_roles field (default: `Vec::new()`)
     pub fn required_member_roles(mut self, value: Vec<String>) -> Self {
         self.required_member_roles = Some(value);
         self
@@ -418,7 +421,7 @@ impl PageBuilder {
             date_publish: self.date_publish,
             website_indexed: self.website_indexed.unwrap_or(true),
             visibility: self.visibility.unwrap_or_default(),
-            required_member_roles: self.required_member_roles.unwrap_or_default(),
+            required_member_roles: self.required_member_roles.unwrap_or(Vec::new()),
             forked_from: self.forked_from,
             forked_at: self.forked_at,
             forked_by: self.forked_by,

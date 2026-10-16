@@ -7,24 +7,19 @@ use utoipa::ToSchema;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Type)]
 #[cfg_attr(feature = "openapi", derive(ToSchema))]
 #[serde(rename_all = "snake_case")]
-// Per-variant renames, not `rename_all = "snake_case"`: the generator's
-// snake_case mapping of `Moved301` yields `moved301`, which cannot
-// round-trip the schema label `moved_301` (digits take no underscore
-// boundary in that mapping). The explicit labels keep the DB enum and
-// the derived decoder in agreement.
-#[sqlx(type_name = "website_redirect_type")]
+#[sqlx(type_name = "website_redirect_type", rename_all = "snake_case")]
 pub enum WebsiteRedirectType {
-    #[sqlx(rename = "moved_301")]
     #[serde(rename = "moved_301")]
+    #[sqlx(rename = "moved_301")]
     Moved301,
-    #[sqlx(rename = "found_302")]
     #[serde(rename = "found_302")]
+    #[sqlx(rename = "found_302")]
     Found302,
-    #[sqlx(rename = "alias_308")]
     #[serde(rename = "alias_308")]
+    #[sqlx(rename = "alias_308")]
     Alias308,
-    #[sqlx(rename = "gone_404")]
     #[serde(rename = "gone_404")]
+    #[sqlx(rename = "gone_404")]
     Gone404,
 }
 

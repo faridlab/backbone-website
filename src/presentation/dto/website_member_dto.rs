@@ -35,7 +35,6 @@ pub struct CreateWebsiteMemberDto {
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     #[serde(alias = "portal_user_id")]
     pub portal_user_id: Uuid,
-    pub role: WebsiteMemberRole,
 }
 
 // =============================================================================
@@ -205,7 +204,7 @@ impl From<CreateWebsiteMemberDto> for WebsiteMember {
             id: Uuid::new_v4(),
             website_id: dto.website_id,
             portal_user_id: dto.portal_user_id,
-            role: dto.role,
+            role: WebsiteMemberRole::Member,
             metadata: AuditMetadata::default(),
         }
     }

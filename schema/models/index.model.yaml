@@ -46,6 +46,7 @@ config:
       - graphql
       - grpc
       - proto
+      - events
 
 # Portal owns the public-principal identity. Every principal reference in
 # this schema keys on the portal-user ROW by LOGICAL ref (no DB constraint

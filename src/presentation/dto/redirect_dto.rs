@@ -35,8 +35,6 @@ pub struct CreateRedirectDto {
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     #[serde(alias = "url_from")]
     pub url_from: String,
-    #[serde(alias = "redirect_type")]
-    pub redirect_type: WebsiteRedirectType,
     #[serde(default, skip_serializing_if = "Option::is_none", alias = "url_to")]
     pub url_to: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -223,7 +221,7 @@ impl From<CreateRedirectDto> for Redirect {
             id: Uuid::new_v4(),
             website_id: dto.website_id,
             url_from: dto.url_from,
-            redirect_type: dto.redirect_type,
+            redirect_type: WebsiteRedirectType::Found302,
             url_to: dto.url_to,
             description: dto.description,
             metadata: AuditMetadata::default(),

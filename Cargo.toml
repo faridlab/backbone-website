@@ -32,7 +32,6 @@ backbone-rate-limit = { version = "3.0.0" }
 # subscribes to NONE (hooks index declares events: {}), owns no outbox
 # table, and the host's outbox_schemas set carries no website entry — the
 # same zero-events-with-plumbing-dep posture as the digest module.
-backbone-messaging = { version = "3.0.0" }
 
 # THE ONLY module edge (the dependency-edge contract): portal's exported
 # type-safe ids are the identity source for every principal reference in

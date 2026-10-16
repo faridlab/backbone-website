@@ -205,8 +205,6 @@ impl Menu {
         }
     }
 
-    // <<< CUSTOM METHODS START >>>
-    // <<< CUSTOM METHODS END >>>
 }
 
 impl super::Entity for Menu {
@@ -335,7 +333,7 @@ impl MenuBuilder {
         self
     }
 
-    /// Set the required_member_roles field (default: `serde_json::json!({})`)
+    /// Set the required_member_roles field (default: `Vec::new()`)
     pub fn required_member_roles(mut self, value: Vec<String>) -> Self {
         self.required_member_roles = Some(value);
         self
@@ -364,7 +362,7 @@ impl MenuBuilder {
             new_window: self.new_window.unwrap_or(false),
             sequence: self.sequence.unwrap_or(10),
             visibility: self.visibility.unwrap_or_default(),
-            required_member_roles: self.required_member_roles.unwrap_or_default(),
+            required_member_roles: self.required_member_roles.unwrap_or(Vec::new()),
             is_mega_menu: self.is_mega_menu.unwrap_or(false),
             metadata: AuditMetadata::default(),
         })

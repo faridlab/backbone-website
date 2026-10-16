@@ -47,7 +47,6 @@ pub struct CreatePageDto {
     #[cfg_attr(feature = "openapi", schema(example = true))]
     #[serde(alias = "website_indexed")]
     pub website_indexed: bool,
-    pub visibility: WebsiteVisibility,
     #[serde(alias = "required_member_roles")]
     pub required_member_roles: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none", alias = "forked_from")]
@@ -297,7 +296,7 @@ impl From<CreatePageDto> for Page {
             is_published: dto.is_published,
             date_publish: dto.date_publish,
             website_indexed: dto.website_indexed,
-            visibility: dto.visibility,
+            visibility: WebsiteVisibility::Public,
             required_member_roles: dto.required_member_roles,
             forked_from: dto.forked_from,
             forked_at: dto.forked_at,

@@ -203,8 +203,6 @@ impl Website {
         }
     }
 
-    // <<< CUSTOM METHODS START >>>
-    // <<< CUSTOM METHODS END >>>
 }
 
 impl super::Entity for Website {
@@ -328,7 +326,7 @@ impl WebsiteBuilder {
         self
     }
 
-    /// Set the contact_recipients field (default: `serde_json::json!({})`)
+    /// Set the contact_recipients field (default: `Vec::new()`)
     pub fn contact_recipients(mut self, value: Vec<String>) -> Self {
         self.contact_recipients = Some(value);
         self
@@ -358,7 +356,7 @@ impl WebsiteBuilder {
             homepage_url: self.homepage_url.unwrap_or("/".to_string()),
             robots_txt: self.robots_txt,
             social_links: self.social_links,
-            contact_recipients: self.contact_recipients.unwrap_or_default(),
+            contact_recipients: self.contact_recipients.unwrap_or(Vec::new()),
             sequence: self.sequence.unwrap_or(10),
             metadata: AuditMetadata::default(),
         })

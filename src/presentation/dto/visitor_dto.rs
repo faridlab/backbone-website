@@ -35,7 +35,6 @@ pub struct CreateVisitorDto {
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     #[serde(alias = "access_token")]
     pub access_token: String,
-    pub kind: WebsiteVisitorKind,
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     pub digest: String,
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
@@ -261,7 +260,7 @@ impl From<CreateVisitorDto> for Visitor {
             id: Uuid::new_v4(),
             website_id: dto.website_id,
             access_token: dto.access_token,
-            kind: dto.kind,
+            kind: WebsiteVisitorKind::Anonymous,
             digest: dto.digest,
             digest_algo: dto.digest_algo,
             portal_user_id: dto.portal_user_id,

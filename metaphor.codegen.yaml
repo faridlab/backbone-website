@@ -17,27 +17,6 @@
 # same change that lands it.
 
 user_owned:
-  # ⚠ GENERATOR-DEFECT FREEZE (pinned generator only): for a `string[]`
-  # field combined with `@default('{}')` the generator emits a builder
-  # arm typed `Option<Vec<String>>` but defaulting through
-  # `serde_json::json!({})` — a type mismatch that cannot compile. The
-  # schema default stays (the DDL contract is `DEFAULT '{}'`); these
-  # three entity files are frozen at their generated state plus the
-  # one-line `.unwrap_or_default()` fix on the affected arms. Regen
-  # would re-emit the defect; unlist only after the generator fixes the
-  # string[]-with-json-default arm.
-  - "src/domain/entity/website.rs"
-  - "src/domain/entity/page.rs"
-  - "src/domain/entity/menu.rs"
-  # ⚠ GENERATOR-DEFECT FREEZE (pinned generator only): `rename_all =
-  # "snake_case"` on a sqlx::Type enum cannot round-trip schema labels
-  # with a digit-underscore boundary (`Moved301` maps to `moved301`,
-  # the DB stores `moved_301`). This enum entity is frozen at its
-  # generated state plus per-variant `#[sqlx(rename)]`/`#[serde(rename)]`
-  # labels. Regen would re-emit the defect; unlist only after the
-  # generator fixes digit-boundary snake_case mapping.
-  - "src/domain/entity/website_redirect_type.rs"
-
   # The composer-installed request-pool shim the verb services resolve
   # their database through (ADR-0029 pool law): hand-written, never
   # schema-derived.
