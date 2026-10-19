@@ -80,6 +80,13 @@ impl axum::response::IntoResponse for PageBlockError {
 // Route Configuration
 // =============================================================================
 
+/// The permissions this entity's generic routes require: `page_block:<action>` for `read`, `create`,
+/// `update`, `delete`, `restore` and `purge`, with any rename the schema's `requires:` declares.
+pub fn page_block_permissions() -> backbone_core::http::CrudPermissions {
+    backbone_core::http::CrudPermissions::new("page_block")
+        .in_module("website")
+}
+
 /// Create Axum router with all 16 Backbone endpoints for PageBlock.
 ///
 /// # Routes
@@ -109,21 +116,23 @@ impl axum::response::IntoResponse for PageBlockError {
 /// let router = create_page_block_routes(service);
 /// ```
 pub fn create_page_block_routes(service: Arc<PageBlockService>) -> Router {
-    BackboneCrudHandler::<PageBlockService, PageBlock, CreatePageBlockDto, UpdatePageBlockDto, PageBlockResponseDto>::routes(
+    BackboneCrudHandler::<PageBlockService, PageBlock, CreatePageBlockDto, UpdatePageBlockDto, PageBlockResponseDto>::routes_guarded(
         service,
         "/page_blocks",
+        page_block_permissions(),
     )
 }
 
 /// Create Axum router with only the read (GET) endpoints for PageBlock.
 ///
-/// Safe for public, unauthenticated exposure (e.g., reference data).
+/// Each route requires the entity's `read` permission, so it needs an authenticated caller.
 /// Mutations must be served separately via `create_page_block_write_routes`,
 /// typically wrapped in an auth middleware layer.
 pub fn create_page_block_read_routes(service: Arc<PageBlockService>) -> Router {
-    BackboneCrudHandler::<PageBlockService, PageBlock, CreatePageBlockDto, UpdatePageBlockDto, PageBlockResponseDto>::read_routes(
+    BackboneCrudHandler::<PageBlockService, PageBlock, CreatePageBlockDto, UpdatePageBlockDto, PageBlockResponseDto>::read_routes_guarded(
         service,
         "/page_blocks",
+        page_block_permissions(),
     )
 }
 
@@ -139,9 +148,10 @@ pub fn create_page_block_read_routes(service: Arc<PageBlockService>) -> Router {
 /// service (e.g. a command router over its domain engine), serve THAT instead
 /// for any mutation that must respect domain rules.
 pub fn create_page_block_write_routes(service: Arc<PageBlockService>) -> Router {
-    BackboneCrudHandler::<PageBlockService, PageBlock, CreatePageBlockDto, UpdatePageBlockDto, PageBlockResponseDto>::write_routes(
+    BackboneCrudHandler::<PageBlockService, PageBlock, CreatePageBlockDto, UpdatePageBlockDto, PageBlockResponseDto>::write_routes_guarded(
         service,
         "/page_blocks",
+        page_block_permissions(),
     )
 }
 

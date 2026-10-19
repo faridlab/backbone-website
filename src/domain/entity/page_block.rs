@@ -122,6 +122,12 @@ impl super::Entity for PageBlock {
 }
 
 impl backbone_core::PersistentEntity for PageBlock {
+    fn references() -> &'static [backbone_core::Reference] {
+        const REFERENCES: &[backbone_core::Reference] = &[
+            backbone_core::Reference::new("page_id", "website.pages", "id"),
+        ];
+        REFERENCES
+    }
     fn entity_id(&self) -> String {
         self.id.to_string()
     }

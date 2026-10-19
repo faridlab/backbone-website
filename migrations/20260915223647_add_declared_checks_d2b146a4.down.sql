@@ -1,0 +1,67 @@
+-- Down: drop the declared rule constraints for website module
+ALTER TABLE IF EXISTS website.website_members DROP CONSTRAINT IF EXISTS ck_website_members_portal_user_id_required__required;
+ALTER TABLE IF EXISTS website.website_members DROP CONSTRAINT IF EXISTS ck_website_members_website_id_required__required;
+DO $$
+BEGIN
+    IF to_regclass('website.uq_website_members_website_id__unique') IS NOT NULL AND to_regclass('website.idx_website_members_portal_user_id_website_id') IS NULL THEN
+        ALTER INDEX website.uq_website_members_website_id__unique RENAME TO idx_website_members_portal_user_id_website_id;
+    END IF;
+END $$;
+
+ALTER TABLE IF EXISTS website.websites DROP CONSTRAINT IF EXISTS ck_websites_homepage_url_max_length__max_length;
+ALTER TABLE IF EXISTS website.websites DROP CONSTRAINT IF EXISTS ck_websites_homepage_url_required__required;
+ALTER TABLE IF EXISTS website.websites DROP CONSTRAINT IF EXISTS ck_websites_default_lang_code_max_length__max_length;
+ALTER TABLE IF EXISTS website.websites DROP CONSTRAINT IF EXISTS ck_websites_default_lang_code_required__required;
+ALTER TABLE IF EXISTS website.websites DROP CONSTRAINT IF EXISTS ck_websites_public_user_id_required__required;
+ALTER TABLE IF EXISTS website.websites DROP CONSTRAINT IF EXISTS ck_websites_domain_max_length__max_length;
+ALTER TABLE IF EXISTS website.websites DROP CONSTRAINT IF EXISTS ck_websites_name_max_length__max_length;
+ALTER TABLE IF EXISTS website.websites DROP CONSTRAINT IF EXISTS ck_websites_name_required__required;
+ALTER TABLE IF EXISTS website.visitor_tracks DROP CONSTRAINT IF EXISTS ck_visitor_tracks_url_max_length__max_length;
+ALTER TABLE IF EXISTS website.visitor_tracks DROP CONSTRAINT IF EXISTS ck_visitor_tracks_url_required__required;
+ALTER TABLE IF EXISTS website.visitor_tracks DROP CONSTRAINT IF EXISTS ck_visitor_tracks_visitor_id_required__required;
+ALTER TABLE IF EXISTS website.visitors DROP CONSTRAINT IF EXISTS ck_visitors_country_code_max_length__max_length;
+ALTER TABLE IF EXISTS website.visitors DROP CONSTRAINT IF EXISTS ck_visitors_digest_algo_max_length__max_length;
+ALTER TABLE IF EXISTS website.visitors DROP CONSTRAINT IF EXISTS ck_visitors_digest_algo_required__required;
+ALTER TABLE IF EXISTS website.visitors DROP CONSTRAINT IF EXISTS ck_visitors_digest_max_length__max_length;
+ALTER TABLE IF EXISTS website.visitors DROP CONSTRAINT IF EXISTS ck_visitors_digest_required__required;
+ALTER TABLE IF EXISTS website.visitors DROP CONSTRAINT IF EXISTS ck_visitors_access_token_max_length__max_length;
+ALTER TABLE IF EXISTS website.visitors DROP CONSTRAINT IF EXISTS ck_visitors_access_token_required__required;
+ALTER TABLE IF EXISTS website.visitors DROP CONSTRAINT IF EXISTS ck_visitors_website_id_required__required;
+DO $$
+BEGIN
+    IF to_regclass('website.uq_visitors_website_id__unique') IS NOT NULL AND to_regclass('website.idx_visitors_digest_website_id') IS NULL THEN
+        ALTER INDEX website.uq_visitors_website_id__unique RENAME TO idx_visitors_digest_website_id;
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF to_regclass('website.uq_visitors_access_token__unique') IS NOT NULL AND to_regclass('website.idx_visitors_access_token') IS NULL THEN
+        ALTER INDEX website.uq_visitors_access_token__unique RENAME TO idx_visitors_access_token;
+    END IF;
+END $$;
+
+ALTER TABLE IF EXISTS website.redirects DROP CONSTRAINT IF EXISTS ck_redirects_description_max_length__max_length;
+ALTER TABLE IF EXISTS website.redirects DROP CONSTRAINT IF EXISTS ck_redirects_url_to_max_length__max_length;
+ALTER TABLE IF EXISTS website.redirects DROP CONSTRAINT IF EXISTS ck_redirects_url_from_max_length__max_length;
+ALTER TABLE IF EXISTS website.redirects DROP CONSTRAINT IF EXISTS ck_redirects_url_from_required__required;
+ALTER TABLE IF EXISTS website.redirects DROP CONSTRAINT IF EXISTS ck_redirects_website_id_required__required;
+ALTER TABLE IF EXISTS website.page_blocks DROP CONSTRAINT IF EXISTS ck_page_blocks_page_id_required__required;
+ALTER TABLE IF EXISTS website.pages DROP CONSTRAINT IF EXISTS ck_pages_seo_name_max_length__max_length;
+ALTER TABLE IF EXISTS website.pages DROP CONSTRAINT IF EXISTS ck_pages_title_max_length__max_length;
+ALTER TABLE IF EXISTS website.pages DROP CONSTRAINT IF EXISTS ck_pages_title_required__required;
+ALTER TABLE IF EXISTS website.pages DROP CONSTRAINT IF EXISTS ck_pages_url_max_length__max_length;
+ALTER TABLE IF EXISTS website.pages DROP CONSTRAINT IF EXISTS ck_pages_url_required__required;
+ALTER TABLE IF EXISTS website.pages DROP CONSTRAINT IF EXISTS ck_pages_key_max_length__max_length;
+ALTER TABLE IF EXISTS website.pages DROP CONSTRAINT IF EXISTS ck_pages_key_required__required;
+ALTER TABLE IF EXISTS website.menu_blocks DROP CONSTRAINT IF EXISTS ck_menu_blocks_menu_id_required__required;
+ALTER TABLE IF EXISTS website.menus DROP CONSTRAINT IF EXISTS ck_menus_url_max_length__max_length;
+ALTER TABLE IF EXISTS website.menus DROP CONSTRAINT IF EXISTS ck_menus_name_max_length__max_length;
+ALTER TABLE IF EXISTS website.menus DROP CONSTRAINT IF EXISTS ck_menus_name_required__required;
+ALTER TABLE IF EXISTS website.menus DROP CONSTRAINT IF EXISTS ck_menus_website_id_required__required;
+ALTER TABLE IF EXISTS website.contact_messages DROP CONSTRAINT IF EXISTS ck_contact_messages_message_max_length__max_length;
+ALTER TABLE IF EXISTS website.contact_messages DROP CONSTRAINT IF EXISTS ck_contact_messages_message_required__required;
+ALTER TABLE IF EXISTS website.contact_messages DROP CONSTRAINT IF EXISTS ck_contact_messages_email_max_length__max_length;
+ALTER TABLE IF EXISTS website.contact_messages DROP CONSTRAINT IF EXISTS ck_contact_messages_email_required__required;
+ALTER TABLE IF EXISTS website.contact_messages DROP CONSTRAINT IF EXISTS ck_contact_messages_name_max_length__max_length;
+ALTER TABLE IF EXISTS website.contact_messages DROP CONSTRAINT IF EXISTS ck_contact_messages_website_id_required__required;

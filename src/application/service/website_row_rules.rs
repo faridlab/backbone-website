@@ -47,9 +47,17 @@ impl backbone_core::write_guard::WriteGuard<Website> for WebsiteRowRules {
         if (create || (update && r::changed(old.as_ref(), row, &["public_user_id"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "public_user_id")), r::not(r::is_empty(r::trim(r::field(row, "public_user_id")))))) {
             refuse.push(Violation::new("public_user_id", "required", "public_user_id is required"));
         }
+        // `default_lang_code_required` (@required on Website.default_lang_code)
+        if (create || (update && r::changed(old.as_ref(), row, &["default_lang_code"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "default_lang_code")), r::not(r::is_empty(r::trim(r::field(row, "default_lang_code")))))) {
+            refuse.push(Violation::new("default_lang_code", "required", "default_lang_code is required"));
+        }
         // `default_lang_code_max_length` (@max(8) on Website.default_lang_code)
         if (create || (update && r::changed(old.as_ref(), row, &["default_lang_code"]))) && !r::holds(&r::le(r::length(r::field(row, "default_lang_code")), r::Val::Num(8.0_f64))) {
             refuse.push(Violation::new("default_lang_code", "max_length", "default_lang_code must be at most 8 characters").with_param("max", 8_i64));
+        }
+        // `homepage_url_required` (@required on Website.homepage_url)
+        if (create || (update && r::changed(old.as_ref(), row, &["homepage_url"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "homepage_url")), r::not(r::is_empty(r::trim(r::field(row, "homepage_url")))))) {
+            refuse.push(Violation::new("homepage_url", "required", "homepage_url is required"));
         }
         // `homepage_url_max_length` (@max(500) on Website.homepage_url)
         if (create || (update && r::changed(old.as_ref(), row, &["homepage_url"]))) && !r::holds(&r::le(r::length(r::field(row, "homepage_url")), r::Val::Num(500.0_f64))) {

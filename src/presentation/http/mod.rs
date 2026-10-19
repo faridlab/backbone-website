@@ -18,16 +18,16 @@ pub mod website_member_handler;
 
 
 // Re-exports
-pub use contact_message_handler::{create_contact_message_routes, create_contact_message_read_routes, create_contact_message_write_routes};
-pub use menu_handler::{create_menu_routes, create_menu_read_routes, create_menu_write_routes};
-pub use menu_block_handler::{create_menu_block_routes, create_menu_block_read_routes, create_menu_block_write_routes};
-pub use page_handler::{create_page_routes, create_page_read_routes, create_page_write_routes};
-pub use page_block_handler::{create_page_block_routes, create_page_block_read_routes, create_page_block_write_routes};
-pub use redirect_handler::{create_redirect_routes, create_redirect_read_routes, create_redirect_write_routes};
-pub use visitor_handler::{create_visitor_routes, create_visitor_read_routes, create_visitor_write_routes};
-pub use visitor_track_handler::{create_visitor_track_routes, create_visitor_track_read_routes, create_visitor_track_write_routes};
-pub use website_handler::{create_website_routes, create_website_read_routes, create_website_write_routes};
-pub use website_member_handler::{create_website_member_routes, create_website_member_read_routes, create_website_member_write_routes};
+pub use contact_message_handler::{create_contact_message_routes, create_contact_message_read_routes, create_contact_message_write_routes, contact_message_permissions};
+pub use menu_handler::{create_menu_routes, create_menu_read_routes, create_menu_write_routes, menu_permissions};
+pub use menu_block_handler::{create_menu_block_routes, create_menu_block_read_routes, create_menu_block_write_routes, menu_block_permissions};
+pub use page_handler::{create_page_routes, create_page_read_routes, create_page_write_routes, page_permissions};
+pub use page_block_handler::{create_page_block_routes, create_page_block_read_routes, create_page_block_write_routes, page_block_permissions};
+pub use redirect_handler::{create_redirect_routes, create_redirect_read_routes, create_redirect_write_routes, redirect_permissions};
+pub use visitor_handler::{create_visitor_routes, create_visitor_read_routes, create_visitor_write_routes, visitor_permissions};
+pub use visitor_track_handler::{create_visitor_track_routes, create_visitor_track_read_routes, create_visitor_track_write_routes, visitor_track_permissions};
+pub use website_handler::{create_website_routes, create_website_read_routes, create_website_write_routes, website_permissions};
+pub use website_member_handler::{create_website_member_routes, create_website_member_read_routes, create_website_member_write_routes, website_member_permissions};
 
 // This directory's extension (hand-written; ADR-0031).
 include!("mod.ext.rs");

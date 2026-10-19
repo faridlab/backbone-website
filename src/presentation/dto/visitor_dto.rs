@@ -38,18 +38,26 @@ pub struct CreateVisitorDto {
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     pub digest: String,
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
-    #[serde(alias = "digest_algo")]
+    #[serde(default = "default_create_visitor_digest_algo", alias = "digest_algo")]
     pub digest_algo: String,
     #[serde(default, skip_serializing_if = "Option::is_none", alias = "portal_user_id")]
     pub portal_user_id: Option<Uuid>,
     #[serde(default, skip_serializing_if = "Option::is_none", alias = "country_code")]
     pub country_code: Option<String>,
     #[cfg_attr(feature = "openapi", schema(example = 42))]
-    #[serde(alias = "visit_count")]
+    #[serde(default, alias = "visit_count")]
     pub visit_count: i32,
     #[cfg_attr(feature = "openapi", schema(example = "2024-01-01T00:00:00Z"))]
-    #[serde(alias = "last_connection_at")]
+    #[serde(default = "default_create_visitor_last_connection_at", alias = "last_connection_at")]
     pub last_connection_at: DateTime<Utc>,
+}
+
+fn default_create_visitor_digest_algo() -> String {
+    "hmac-sha256-v1".to_string()
+}
+
+fn default_create_visitor_last_connection_at() -> DateTime<Utc> {
+    Utc::now()
 }
 
 // =============================================================================
@@ -108,10 +116,10 @@ pub struct PatchVisitorDto {
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     #[serde(skip_serializing_if = "Option::is_none", alias = "digest_algo")]
     pub digest_algo: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "portal_user_id")]
-    pub portal_user_id: Option<Uuid>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "country_code")]
-    pub country_code: Option<String>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "portal_user_id")]
+    pub portal_user_id: Option<Option<Uuid>>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "country_code")]
+    pub country_code: Option<Option<String>>,
     #[cfg_attr(feature = "openapi", schema(example = 42))]
     #[serde(skip_serializing_if = "Option::is_none", alias = "visit_count")]
     pub visit_count: Option<i32>,
@@ -309,12 +317,4 @@ impl backbone_core::ApplyUpdateDto<UpdateVisitorDto> for Visitor {
         Ok(self)
     }
 }
-
-// =============================================================================
-// Custom DTOs
-// =============================================================================
-
-// Add custom DTOs specific to Visitor here.
-// This section will be preserved during regeneration.
-// >>> END CUSTOM DTOs
 

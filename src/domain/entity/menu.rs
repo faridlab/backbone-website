@@ -220,6 +220,13 @@ impl super::Entity for Menu {
 }
 
 impl backbone_core::PersistentEntity for Menu {
+    fn references() -> &'static [backbone_core::Reference] {
+        const REFERENCES: &[backbone_core::Reference] = &[
+            backbone_core::Reference::new("website_id", "website.websites", "id"),
+            backbone_core::Reference::new("parent_id", "website.menus", "id"),
+        ];
+        REFERENCES
+    }
     fn entity_id(&self) -> String {
         self.id.to_string()
     }

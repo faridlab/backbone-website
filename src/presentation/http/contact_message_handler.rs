@@ -80,6 +80,13 @@ impl axum::response::IntoResponse for ContactMessageError {
 // Route Configuration
 // =============================================================================
 
+/// The permissions this entity's generic routes require: `contact_message:<action>` for `read`, `create`,
+/// `update`, `delete`, `restore` and `purge`, with any rename the schema's `requires:` declares.
+pub fn contact_message_permissions() -> backbone_core::http::CrudPermissions {
+    backbone_core::http::CrudPermissions::new("contact_message")
+        .in_module("website")
+}
+
 /// Create Axum router with all 16 Backbone endpoints for ContactMessage.
 ///
 /// # Routes
@@ -109,21 +116,23 @@ impl axum::response::IntoResponse for ContactMessageError {
 /// let router = create_contact_message_routes(service);
 /// ```
 pub fn create_contact_message_routes(service: Arc<ContactMessageService>) -> Router {
-    BackboneCrudHandler::<ContactMessageService, ContactMessage, CreateContactMessageDto, UpdateContactMessageDto, ContactMessageResponseDto>::routes(
+    BackboneCrudHandler::<ContactMessageService, ContactMessage, CreateContactMessageDto, UpdateContactMessageDto, ContactMessageResponseDto>::routes_guarded(
         service,
         "/contact_messages",
+        contact_message_permissions(),
     )
 }
 
 /// Create Axum router with only the read (GET) endpoints for ContactMessage.
 ///
-/// Safe for public, unauthenticated exposure (e.g., reference data).
+/// Each route requires the entity's `read` permission, so it needs an authenticated caller.
 /// Mutations must be served separately via `create_contact_message_write_routes`,
 /// typically wrapped in an auth middleware layer.
 pub fn create_contact_message_read_routes(service: Arc<ContactMessageService>) -> Router {
-    BackboneCrudHandler::<ContactMessageService, ContactMessage, CreateContactMessageDto, UpdateContactMessageDto, ContactMessageResponseDto>::read_routes(
+    BackboneCrudHandler::<ContactMessageService, ContactMessage, CreateContactMessageDto, UpdateContactMessageDto, ContactMessageResponseDto>::read_routes_guarded(
         service,
         "/contact_messages",
+        contact_message_permissions(),
     )
 }
 
@@ -139,9 +148,10 @@ pub fn create_contact_message_read_routes(service: Arc<ContactMessageService>) -
 /// service (e.g. a command router over its domain engine), serve THAT instead
 /// for any mutation that must respect domain rules.
 pub fn create_contact_message_write_routes(service: Arc<ContactMessageService>) -> Router {
-    BackboneCrudHandler::<ContactMessageService, ContactMessage, CreateContactMessageDto, UpdateContactMessageDto, ContactMessageResponseDto>::write_routes(
+    BackboneCrudHandler::<ContactMessageService, ContactMessage, CreateContactMessageDto, UpdateContactMessageDto, ContactMessageResponseDto>::write_routes_guarded(
         service,
         "/contact_messages",
+        contact_message_permissions(),
     )
 }
 

@@ -40,12 +40,12 @@ pub struct CreatePageDto {
     #[serde(default, skip_serializing_if = "Option::is_none", alias = "seo_name")]
     pub seo_name: Option<String>,
     #[cfg_attr(feature = "openapi", schema(example = true))]
-    #[serde(alias = "is_published")]
+    #[serde(default, alias = "is_published")]
     pub is_published: bool,
     #[serde(default, skip_serializing_if = "Option::is_none", alias = "date_publish")]
     pub date_publish: Option<DateTime<Utc>>,
     #[cfg_attr(feature = "openapi", schema(example = true))]
-    #[serde(alias = "website_indexed")]
+    #[serde(default = "default_create_page_website_indexed", alias = "website_indexed")]
     pub website_indexed: bool,
     #[serde(alias = "required_member_roles")]
     pub required_member_roles: Vec<String>,
@@ -55,6 +55,10 @@ pub struct CreatePageDto {
     pub forked_at: Option<DateTime<Utc>>,
     #[serde(default, skip_serializing_if = "Option::is_none", alias = "forked_by")]
     pub forked_by: Option<Uuid>,
+}
+
+fn default_create_page_website_indexed() -> bool {
+    true
 }
 
 // =============================================================================
@@ -113,21 +117,21 @@ pub struct PatchPageDto {
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub key: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "website_id")]
-    pub website_id: Option<Uuid>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "website_id")]
+    pub website_id: Option<Option<Uuid>>,
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub url: Option<String>,
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub title: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "seo_name")]
-    pub seo_name: Option<String>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "seo_name")]
+    pub seo_name: Option<Option<String>>,
     #[cfg_attr(feature = "openapi", schema(example = true))]
     #[serde(skip_serializing_if = "Option::is_none", alias = "is_published")]
     pub is_published: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "date_publish")]
-    pub date_publish: Option<DateTime<Utc>>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "date_publish")]
+    pub date_publish: Option<Option<DateTime<Utc>>>,
     #[cfg_attr(feature = "openapi", schema(example = true))]
     #[serde(skip_serializing_if = "Option::is_none", alias = "website_indexed")]
     pub website_indexed: Option<bool>,
@@ -135,12 +139,12 @@ pub struct PatchPageDto {
     pub visibility: Option<WebsiteVisibility>,
     #[serde(skip_serializing_if = "Option::is_none", alias = "required_member_roles")]
     pub required_member_roles: Option<Vec<String>>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "forked_from")]
-    pub forked_from: Option<Uuid>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "forked_at")]
-    pub forked_at: Option<DateTime<Utc>>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "forked_by")]
-    pub forked_by: Option<Uuid>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "forked_from")]
+    pub forked_from: Option<Option<Uuid>>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "forked_at")]
+    pub forked_at: Option<Option<DateTime<Utc>>>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "forked_by")]
+    pub forked_by: Option<Option<Uuid>>,
 }
 
 impl PatchPageDto {
@@ -352,12 +356,4 @@ impl backbone_core::ApplyUpdateDto<UpdatePageDto> for Page {
         Ok(self)
     }
 }
-
-// =============================================================================
-// Custom DTOs
-// =============================================================================
-
-// Add custom DTOs specific to Page here.
-// This section will be preserved during regeneration.
-// >>> END CUSTOM DTOs
 

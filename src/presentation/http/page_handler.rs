@@ -81,6 +81,13 @@ impl axum::response::IntoResponse for PageError {
 // Route Configuration
 // =============================================================================
 
+/// The permissions this entity's generic routes require: `page:<action>` for `read`, `create`,
+/// `update`, `delete`, `restore` and `purge`, with any rename the schema's `requires:` declares.
+pub fn page_permissions() -> backbone_core::http::CrudPermissions {
+    backbone_core::http::CrudPermissions::new("page")
+        .in_module("website")
+}
+
 /// Create Axum router with all 16 Backbone endpoints for Page.
 ///
 /// # Routes
@@ -110,21 +117,23 @@ impl axum::response::IntoResponse for PageError {
 /// let router = create_page_routes(service);
 /// ```
 pub fn create_page_routes(service: Arc<PageService>) -> Router {
-    BackboneCrudHandler::<PageService, Page, CreatePageDto, UpdatePageDto, PageResponseDto>::routes(
+    BackboneCrudHandler::<PageService, Page, CreatePageDto, UpdatePageDto, PageResponseDto>::routes_guarded(
         service,
         "/pages",
+        page_permissions(),
     )
 }
 
 /// Create Axum router with only the read (GET) endpoints for Page.
 ///
-/// Safe for public, unauthenticated exposure (e.g., reference data).
+/// Each route requires the entity's `read` permission, so it needs an authenticated caller.
 /// Mutations must be served separately via `create_page_write_routes`,
 /// typically wrapped in an auth middleware layer.
 pub fn create_page_read_routes(service: Arc<PageService>) -> Router {
-    BackboneCrudHandler::<PageService, Page, CreatePageDto, UpdatePageDto, PageResponseDto>::read_routes(
+    BackboneCrudHandler::<PageService, Page, CreatePageDto, UpdatePageDto, PageResponseDto>::read_routes_guarded(
         service,
         "/pages",
+        page_permissions(),
     )
 }
 
@@ -140,9 +149,10 @@ pub fn create_page_read_routes(service: Arc<PageService>) -> Router {
 /// service (e.g. a command router over its domain engine), serve THAT instead
 /// for any mutation that must respect domain rules.
 pub fn create_page_write_routes(service: Arc<PageService>) -> Router {
-    BackboneCrudHandler::<PageService, Page, CreatePageDto, UpdatePageDto, PageResponseDto>::write_routes(
+    BackboneCrudHandler::<PageService, Page, CreatePageDto, UpdatePageDto, PageResponseDto>::write_routes_guarded(
         service,
         "/pages",
+        page_permissions(),
     )
 }
 

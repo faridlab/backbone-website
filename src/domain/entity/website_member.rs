@@ -166,6 +166,12 @@ impl backbone_core::PersistentEntity for WebsiteMember {
     fn write_protected_fields() -> &'static [&'static str] {
         &["role"]
     }
+    fn references() -> &'static [backbone_core::Reference] {
+        const REFERENCES: &[backbone_core::Reference] = &[
+            backbone_core::Reference::new("website_id", "website.websites", "id"),
+        ];
+        REFERENCES
+    }
     fn entity_id(&self) -> String {
         self.id.to_string()
     }

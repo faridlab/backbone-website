@@ -39,10 +39,10 @@ pub struct CreateWebsiteDto {
     #[serde(alias = "public_user_id")]
     pub public_user_id: Uuid,
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
-    #[serde(alias = "default_lang_code")]
+    #[serde(default = "default_create_website_default_lang_code", alias = "default_lang_code")]
     pub default_lang_code: String,
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
-    #[serde(alias = "homepage_url")]
+    #[serde(default = "default_create_website_homepage_url", alias = "homepage_url")]
     pub homepage_url: String,
     #[serde(default, skip_serializing_if = "Option::is_none", alias = "robots_txt")]
     pub robots_txt: Option<String>,
@@ -51,7 +51,20 @@ pub struct CreateWebsiteDto {
     #[serde(alias = "contact_recipients")]
     pub contact_recipients: Vec<String>,
     #[cfg_attr(feature = "openapi", schema(example = 42))]
+    #[serde(default = "default_create_website_sequence")]
     pub sequence: i32,
+}
+
+fn default_create_website_default_lang_code() -> String {
+    "en".to_string()
+}
+
+fn default_create_website_homepage_url() -> String {
+    "/".to_string()
+}
+
+fn default_create_website_sequence() -> i32 {
+    10
 }
 
 // =============================================================================
@@ -107,8 +120,8 @@ pub struct PatchWebsiteDto {
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub domain: Option<String>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option")]
+    pub domain: Option<Option<String>>,
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     #[serde(skip_serializing_if = "Option::is_none", alias = "company_id")]
     pub company_id: Option<Uuid>,
@@ -121,10 +134,10 @@ pub struct PatchWebsiteDto {
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     #[serde(skip_serializing_if = "Option::is_none", alias = "homepage_url")]
     pub homepage_url: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "robots_txt")]
-    pub robots_txt: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "social_links")]
-    pub social_links: Option<serde_json::Value>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "robots_txt")]
+    pub robots_txt: Option<Option<String>>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "social_links")]
+    pub social_links: Option<Option<serde_json::Value>>,
     #[serde(skip_serializing_if = "Option::is_none", alias = "contact_recipients")]
     pub contact_recipients: Option<Vec<String>>,
     #[cfg_attr(feature = "openapi", schema(example = 42))]
@@ -327,12 +340,4 @@ impl backbone_core::ApplyUpdateDto<UpdateWebsiteDto> for Website {
         Ok(self)
     }
 }
-
-// =============================================================================
-// Custom DTOs
-// =============================================================================
-
-// Add custom DTOs specific to Website here.
-// This section will be preserved during regeneration.
-// >>> END CUSTOM DTOs
 

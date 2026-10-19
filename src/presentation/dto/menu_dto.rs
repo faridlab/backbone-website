@@ -41,16 +41,26 @@ pub struct CreateMenuDto {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub url: Option<String>,
     #[cfg_attr(feature = "openapi", schema(example = true))]
-    #[serde(alias = "new_window")]
+    #[serde(default, alias = "new_window")]
     pub new_window: bool,
     #[cfg_attr(feature = "openapi", schema(example = 42))]
+    #[serde(default = "default_create_menu_sequence")]
     pub sequence: i32,
+    #[serde(default = "default_create_menu_visibility")]
     pub visibility: WebsiteVisibility,
     #[serde(alias = "required_member_roles")]
     pub required_member_roles: Vec<String>,
     #[cfg_attr(feature = "openapi", schema(example = true))]
-    #[serde(alias = "is_mega_menu")]
+    #[serde(default, alias = "is_mega_menu")]
     pub is_mega_menu: bool,
+}
+
+fn default_create_menu_sequence() -> i32 {
+    10
+}
+
+fn default_create_menu_visibility() -> WebsiteVisibility {
+    WebsiteVisibility::Public
 }
 
 // =============================================================================
@@ -104,15 +114,15 @@ pub struct PatchMenuDto {
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     #[serde(skip_serializing_if = "Option::is_none", alias = "website_id")]
     pub website_id: Option<Uuid>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "parent_id")]
-    pub parent_id: Option<Uuid>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "parent_id")]
+    pub parent_id: Option<Option<Uuid>>,
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "page_id")]
-    pub page_id: Option<Uuid>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub url: Option<String>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "page_id")]
+    pub page_id: Option<Option<Uuid>>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option")]
+    pub url: Option<Option<String>>,
     #[cfg_attr(feature = "openapi", schema(example = true))]
     #[serde(skip_serializing_if = "Option::is_none", alias = "new_window")]
     pub new_window: Option<bool>,
@@ -322,12 +332,4 @@ impl backbone_core::ApplyUpdateDto<UpdateMenuDto> for Menu {
         Ok(self)
     }
 }
-
-// =============================================================================
-// Custom DTOs
-// =============================================================================
-
-// Add custom DTOs specific to Menu here.
-// This section will be preserved during regeneration.
-// >>> END CUSTOM DTOs
 

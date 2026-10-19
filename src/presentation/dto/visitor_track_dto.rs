@@ -35,8 +35,12 @@ pub struct CreateVisitorTrackDto {
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     pub url: String,
     #[cfg_attr(feature = "openapi", schema(example = "2024-01-01T00:00:00Z"))]
-    #[serde(alias = "visited_at")]
+    #[serde(default = "default_create_visitor_track_visited_at", alias = "visited_at")]
     pub visited_at: DateTime<Utc>,
+}
+
+fn default_create_visitor_track_visited_at() -> DateTime<Utc> {
+    Utc::now()
 }
 
 // =============================================================================
@@ -78,8 +82,8 @@ pub struct PatchVisitorTrackDto {
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     #[serde(skip_serializing_if = "Option::is_none", alias = "visitor_id")]
     pub visitor_id: Option<Uuid>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "page_id")]
-    pub page_id: Option<Uuid>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "page_id")]
+    pub page_id: Option<Option<Uuid>>,
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub url: Option<String>,
@@ -246,12 +250,4 @@ impl backbone_core::ApplyUpdateDto<UpdateVisitorTrackDto> for VisitorTrack {
         Ok(self)
     }
 }
-
-// =============================================================================
-// Custom DTOs
-// =============================================================================
-
-// Add custom DTOs specific to VisitorTrack here.
-// This section will be preserved during regeneration.
-// >>> END CUSTOM DTOs
 

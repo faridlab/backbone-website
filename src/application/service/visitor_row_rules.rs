@@ -51,6 +51,10 @@ impl backbone_core::write_guard::WriteGuard<Visitor> for VisitorRowRules {
         if (create || (update && r::changed(old.as_ref(), row, &["digest"]))) && !r::holds(&r::le(r::length(r::field(row, "digest")), r::Val::Num(128.0_f64))) {
             refuse.push(Violation::new("digest", "max_length", "digest must be at most 128 characters").with_param("max", 128_i64));
         }
+        // `digest_algo_required` (@required on Visitor.digest_algo)
+        if (create || (update && r::changed(old.as_ref(), row, &["digest_algo"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "digest_algo")), r::not(r::is_empty(r::trim(r::field(row, "digest_algo")))))) {
+            refuse.push(Violation::new("digest_algo", "required", "digest_algo is required"));
+        }
         // `digest_algo_max_length` (@max(32) on Visitor.digest_algo)
         if (create || (update && r::changed(old.as_ref(), row, &["digest_algo"]))) && !r::holds(&r::le(r::length(r::field(row, "digest_algo")), r::Val::Num(32.0_f64))) {
             refuse.push(Violation::new("digest_algo", "max_length", "digest_algo must be at most 32 characters").with_param("max", 32_i64));

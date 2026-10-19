@@ -87,10 +87,10 @@ pub struct PatchRedirectDto {
     pub url_from: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none", alias = "redirect_type")]
     pub redirect_type: Option<WebsiteRedirectType>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "url_to")]
-    pub url_to: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub description: Option<String>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "url_to")]
+    pub url_to: Option<Option<String>>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option")]
+    pub description: Option<Option<String>>,
 }
 
 impl PatchRedirectDto {
@@ -259,12 +259,4 @@ impl backbone_core::ApplyUpdateDto<UpdateRedirectDto> for Redirect {
         Ok(self)
     }
 }
-
-// =============================================================================
-// Custom DTOs
-// =============================================================================
-
-// Add custom DTOs specific to Redirect here.
-// This section will be preserved during regeneration.
-// >>> END CUSTOM DTOs
 

@@ -55,30 +55,6 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-    post:
-      tags:
-        - ContactMessages
-      summary: Create ContactMessage
-      description: Create a new ContactMessage
-      operationId: createContactMessage
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateContactMessageRequest'
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ContactMessage'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
   /api/v1/website/contact_messages/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
@@ -98,181 +74,6 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-    put:
-      tags:
-        - ContactMessages
-      summary: Update ContactMessage (full)
-      operationId: updateContactMessage
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateContactMessageRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ContactMessage'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    patch:
-      tags:
-        - ContactMessages
-      summary: Update ContactMessage (partial)
-      operationId: patchContactMessage
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchContactMessageRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ContactMessage'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    delete:
-      tags:
-        - ContactMessages
-      summary: Delete ContactMessage (soft)
-      operationId: deleteContactMessage
-      responses:
-        '204':
-          description: Deleted
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/website/contact_messages/bulk:
-    post:
-      tags:
-        - ContactMessages
-      summary: Bulk create ContactMessages
-      operationId: bulkCreateContactMessages
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/CreateContactMessageRequest'
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ContactMessage'
-    put:
-      tags:
-        - ContactMessages
-      summary: Bulk update ContactMessages (full, atomic)
-      operationId: bulkUpdateContactMessages
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                allOf:
-                  - type: object
-                    required: [id]
-                    properties:
-                      id:
-                        type: string
-                  - $ref: '#/components/schemas/UpdateContactMessageRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ContactMessageBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-    patch:
-      tags:
-        - ContactMessages
-      summary: Bulk partial-update ContactMessages (atomic)
-      operationId: bulkPatchContactMessages
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              oneOf:
-                - type: object
-                  required: [ids, patch]
-                  properties:
-                    ids:
-                      type: array
-                      items: { type: string }
-                    patch:
-                      type: object
-                      additionalProperties: true
-                - type: object
-                  required: [items]
-                  properties:
-                    items:
-                      type: array
-                      items:
-                        type: object
-                        required: [id, patch]
-                        properties:
-                          id: { type: string }
-                          patch: { type: object, additionalProperties: true }
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ContactMessageBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/contact_messages/upsert:
-    post:
-      tags:
-        - ContactMessages
-      summary: Upsert ContactMessage
-      operationId: upsertContactMessage
-      parameters:
-        - name: key_field
-          in: query
-          schema:
-            type: string
-        - name: key_value
-          in: query
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateContactMessageRequest'
-      responses:
-        '200':
-          description: Upserted
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ContactMessage'
-
   /api/v1/website/contact_messages/trash:
     get:
       tags:
@@ -289,115 +90,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ContactMessageList'
-
-  /api/v1/website/contact_messages/{id}/restore:
-    parameters:
-      - $ref: '#/components/parameters/IdParam'
-    post:
-      tags:
-        - ContactMessages
-      summary: Restore deleted ContactMessage
-      operationId: restoreContactMessage
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ContactMessage'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/website/contact_messages/empty:
-    delete:
-      tags:
-        - ContactMessages
-      summary: Empty trash for ContactMessages
-      operationId: emptyTrashContactMessages
-      responses:
-        '200':
-          description: Trash emptied
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  deleted_count:
-                    type: integer
-
-  /api/v1/website/contact_messages/delete/bulk:
-    post:
-      tags:
-        - ContactMessages
-      summary: Bulk soft-delete ContactMessages by ids (atomic)
-      operationId: bulkDeleteContactMessages
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Soft-deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  soft_deleted: { type: integer }
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/contact_messages/restore/bulk:
-    post:
-      tags:
-        - ContactMessages
-      summary: Bulk restore ContactMessages by ids (atomic)
-      operationId: bulkRestoreContactMessages
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ContactMessageBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/contact_messages/restore/all:
-    post:
-      tags:
-        - ContactMessages
-      summary: Restore all soft-deleted ContactMessages
-      operationId: restoreAllContactMessages
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  restored: { type: integer }
-
-  /api/v1/website/contact_messages/trash/bulk:
-    delete:
-      tags:
-        - ContactMessages
-      summary: Bulk permanently-delete ContactMessages from trash by ids (atomic)
-      operationId: bulkPermanentDeleteContactMessages
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Permanently deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  permanently_deleted: { type: integer }
-        '400':
-          $ref: '#/components/responses/BadRequest'
 
   /api/v1/website/menus:
     get:
@@ -421,30 +113,6 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-    post:
-      tags:
-        - Menus
-      summary: Create Menu
-      description: Create a new Menu
-      operationId: createMenu
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateMenuRequest'
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Menu'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
   /api/v1/website/menus/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
@@ -464,181 +132,6 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-    put:
-      tags:
-        - Menus
-      summary: Update Menu (full)
-      operationId: updateMenu
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateMenuRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Menu'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    patch:
-      tags:
-        - Menus
-      summary: Update Menu (partial)
-      operationId: patchMenu
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchMenuRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Menu'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    delete:
-      tags:
-        - Menus
-      summary: Delete Menu (soft)
-      operationId: deleteMenu
-      responses:
-        '204':
-          description: Deleted
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/website/menus/bulk:
-    post:
-      tags:
-        - Menus
-      summary: Bulk create Menus
-      operationId: bulkCreateMenus
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/CreateMenuRequest'
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Menu'
-    put:
-      tags:
-        - Menus
-      summary: Bulk update Menus (full, atomic)
-      operationId: bulkUpdateMenus
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                allOf:
-                  - type: object
-                    required: [id]
-                    properties:
-                      id:
-                        type: string
-                  - $ref: '#/components/schemas/UpdateMenuRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MenuBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-    patch:
-      tags:
-        - Menus
-      summary: Bulk partial-update Menus (atomic)
-      operationId: bulkPatchMenus
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              oneOf:
-                - type: object
-                  required: [ids, patch]
-                  properties:
-                    ids:
-                      type: array
-                      items: { type: string }
-                    patch:
-                      type: object
-                      additionalProperties: true
-                - type: object
-                  required: [items]
-                  properties:
-                    items:
-                      type: array
-                      items:
-                        type: object
-                        required: [id, patch]
-                        properties:
-                          id: { type: string }
-                          patch: { type: object, additionalProperties: true }
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MenuBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/menus/upsert:
-    post:
-      tags:
-        - Menus
-      summary: Upsert Menu
-      operationId: upsertMenu
-      parameters:
-        - name: key_field
-          in: query
-          schema:
-            type: string
-        - name: key_value
-          in: query
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateMenuRequest'
-      responses:
-        '200':
-          description: Upserted
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Menu'
-
   /api/v1/website/menus/trash:
     get:
       tags:
@@ -655,115 +148,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MenuList'
-
-  /api/v1/website/menus/{id}/restore:
-    parameters:
-      - $ref: '#/components/parameters/IdParam'
-    post:
-      tags:
-        - Menus
-      summary: Restore deleted Menu
-      operationId: restoreMenu
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Menu'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/website/menus/empty:
-    delete:
-      tags:
-        - Menus
-      summary: Empty trash for Menus
-      operationId: emptyTrashMenus
-      responses:
-        '200':
-          description: Trash emptied
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  deleted_count:
-                    type: integer
-
-  /api/v1/website/menus/delete/bulk:
-    post:
-      tags:
-        - Menus
-      summary: Bulk soft-delete Menus by ids (atomic)
-      operationId: bulkDeleteMenus
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Soft-deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  soft_deleted: { type: integer }
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/menus/restore/bulk:
-    post:
-      tags:
-        - Menus
-      summary: Bulk restore Menus by ids (atomic)
-      operationId: bulkRestoreMenus
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MenuBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/menus/restore/all:
-    post:
-      tags:
-        - Menus
-      summary: Restore all soft-deleted Menus
-      operationId: restoreAllMenus
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  restored: { type: integer }
-
-  /api/v1/website/menus/trash/bulk:
-    delete:
-      tags:
-        - Menus
-      summary: Bulk permanently-delete Menus from trash by ids (atomic)
-      operationId: bulkPermanentDeleteMenus
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Permanently deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  permanently_deleted: { type: integer }
-        '400':
-          $ref: '#/components/responses/BadRequest'
 
   /api/v1/website/menu_blocks:
     get:
@@ -787,30 +171,6 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-    post:
-      tags:
-        - MenuBlocks
-      summary: Create MenuBlock
-      description: Create a new MenuBlock
-      operationId: createMenuBlock
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateMenuBlockRequest'
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MenuBlock'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
   /api/v1/website/menu_blocks/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
@@ -830,181 +190,6 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-    put:
-      tags:
-        - MenuBlocks
-      summary: Update MenuBlock (full)
-      operationId: updateMenuBlock
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateMenuBlockRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MenuBlock'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    patch:
-      tags:
-        - MenuBlocks
-      summary: Update MenuBlock (partial)
-      operationId: patchMenuBlock
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchMenuBlockRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MenuBlock'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    delete:
-      tags:
-        - MenuBlocks
-      summary: Delete MenuBlock (soft)
-      operationId: deleteMenuBlock
-      responses:
-        '204':
-          description: Deleted
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/website/menu_blocks/bulk:
-    post:
-      tags:
-        - MenuBlocks
-      summary: Bulk create MenuBlocks
-      operationId: bulkCreateMenuBlocks
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/CreateMenuBlockRequest'
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/MenuBlock'
-    put:
-      tags:
-        - MenuBlocks
-      summary: Bulk update MenuBlocks (full, atomic)
-      operationId: bulkUpdateMenuBlocks
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                allOf:
-                  - type: object
-                    required: [id]
-                    properties:
-                      id:
-                        type: string
-                  - $ref: '#/components/schemas/UpdateMenuBlockRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MenuBlockBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-    patch:
-      tags:
-        - MenuBlocks
-      summary: Bulk partial-update MenuBlocks (atomic)
-      operationId: bulkPatchMenuBlocks
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              oneOf:
-                - type: object
-                  required: [ids, patch]
-                  properties:
-                    ids:
-                      type: array
-                      items: { type: string }
-                    patch:
-                      type: object
-                      additionalProperties: true
-                - type: object
-                  required: [items]
-                  properties:
-                    items:
-                      type: array
-                      items:
-                        type: object
-                        required: [id, patch]
-                        properties:
-                          id: { type: string }
-                          patch: { type: object, additionalProperties: true }
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MenuBlockBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/menu_blocks/upsert:
-    post:
-      tags:
-        - MenuBlocks
-      summary: Upsert MenuBlock
-      operationId: upsertMenuBlock
-      parameters:
-        - name: key_field
-          in: query
-          schema:
-            type: string
-        - name: key_value
-          in: query
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateMenuBlockRequest'
-      responses:
-        '200':
-          description: Upserted
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MenuBlock'
-
   /api/v1/website/menu_blocks/trash:
     get:
       tags:
@@ -1021,115 +206,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MenuBlockList'
-
-  /api/v1/website/menu_blocks/{id}/restore:
-    parameters:
-      - $ref: '#/components/parameters/IdParam'
-    post:
-      tags:
-        - MenuBlocks
-      summary: Restore deleted MenuBlock
-      operationId: restoreMenuBlock
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MenuBlock'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/website/menu_blocks/empty:
-    delete:
-      tags:
-        - MenuBlocks
-      summary: Empty trash for MenuBlocks
-      operationId: emptyTrashMenuBlocks
-      responses:
-        '200':
-          description: Trash emptied
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  deleted_count:
-                    type: integer
-
-  /api/v1/website/menu_blocks/delete/bulk:
-    post:
-      tags:
-        - MenuBlocks
-      summary: Bulk soft-delete MenuBlocks by ids (atomic)
-      operationId: bulkDeleteMenuBlocks
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Soft-deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  soft_deleted: { type: integer }
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/menu_blocks/restore/bulk:
-    post:
-      tags:
-        - MenuBlocks
-      summary: Bulk restore MenuBlocks by ids (atomic)
-      operationId: bulkRestoreMenuBlocks
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MenuBlockBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/menu_blocks/restore/all:
-    post:
-      tags:
-        - MenuBlocks
-      summary: Restore all soft-deleted MenuBlocks
-      operationId: restoreAllMenuBlocks
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  restored: { type: integer }
-
-  /api/v1/website/menu_blocks/trash/bulk:
-    delete:
-      tags:
-        - MenuBlocks
-      summary: Bulk permanently-delete MenuBlocks from trash by ids (atomic)
-      operationId: bulkPermanentDeleteMenuBlocks
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Permanently deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  permanently_deleted: { type: integer }
-        '400':
-          $ref: '#/components/responses/BadRequest'
 
   /api/v1/website/pages:
     get:
@@ -1153,30 +229,6 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-    post:
-      tags:
-        - Pages
-      summary: Create Page
-      description: Create a new Page
-      operationId: createPage
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreatePageRequest'
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Page'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
   /api/v1/website/pages/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
@@ -1196,181 +248,6 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-    put:
-      tags:
-        - Pages
-      summary: Update Page (full)
-      operationId: updatePage
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdatePageRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Page'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    patch:
-      tags:
-        - Pages
-      summary: Update Page (partial)
-      operationId: patchPage
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchPageRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Page'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    delete:
-      tags:
-        - Pages
-      summary: Delete Page (soft)
-      operationId: deletePage
-      responses:
-        '204':
-          description: Deleted
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/website/pages/bulk:
-    post:
-      tags:
-        - Pages
-      summary: Bulk create Pages
-      operationId: bulkCreatePages
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/CreatePageRequest'
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Page'
-    put:
-      tags:
-        - Pages
-      summary: Bulk update Pages (full, atomic)
-      operationId: bulkUpdatePages
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                allOf:
-                  - type: object
-                    required: [id]
-                    properties:
-                      id:
-                        type: string
-                  - $ref: '#/components/schemas/UpdatePageRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PageBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-    patch:
-      tags:
-        - Pages
-      summary: Bulk partial-update Pages (atomic)
-      operationId: bulkPatchPages
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              oneOf:
-                - type: object
-                  required: [ids, patch]
-                  properties:
-                    ids:
-                      type: array
-                      items: { type: string }
-                    patch:
-                      type: object
-                      additionalProperties: true
-                - type: object
-                  required: [items]
-                  properties:
-                    items:
-                      type: array
-                      items:
-                        type: object
-                        required: [id, patch]
-                        properties:
-                          id: { type: string }
-                          patch: { type: object, additionalProperties: true }
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PageBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/pages/upsert:
-    post:
-      tags:
-        - Pages
-      summary: Upsert Page
-      operationId: upsertPage
-      parameters:
-        - name: key_field
-          in: query
-          schema:
-            type: string
-        - name: key_value
-          in: query
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdatePageRequest'
-      responses:
-        '200':
-          description: Upserted
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Page'
-
   /api/v1/website/pages/trash:
     get:
       tags:
@@ -1387,115 +264,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PageList'
-
-  /api/v1/website/pages/{id}/restore:
-    parameters:
-      - $ref: '#/components/parameters/IdParam'
-    post:
-      tags:
-        - Pages
-      summary: Restore deleted Page
-      operationId: restorePage
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Page'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/website/pages/empty:
-    delete:
-      tags:
-        - Pages
-      summary: Empty trash for Pages
-      operationId: emptyTrashPages
-      responses:
-        '200':
-          description: Trash emptied
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  deleted_count:
-                    type: integer
-
-  /api/v1/website/pages/delete/bulk:
-    post:
-      tags:
-        - Pages
-      summary: Bulk soft-delete Pages by ids (atomic)
-      operationId: bulkDeletePages
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Soft-deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  soft_deleted: { type: integer }
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/pages/restore/bulk:
-    post:
-      tags:
-        - Pages
-      summary: Bulk restore Pages by ids (atomic)
-      operationId: bulkRestorePages
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PageBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/pages/restore/all:
-    post:
-      tags:
-        - Pages
-      summary: Restore all soft-deleted Pages
-      operationId: restoreAllPages
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  restored: { type: integer }
-
-  /api/v1/website/pages/trash/bulk:
-    delete:
-      tags:
-        - Pages
-      summary: Bulk permanently-delete Pages from trash by ids (atomic)
-      operationId: bulkPermanentDeletePages
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Permanently deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  permanently_deleted: { type: integer }
-        '400':
-          $ref: '#/components/responses/BadRequest'
 
   /api/v1/website/page_blocks:
     get:
@@ -1519,30 +287,6 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-    post:
-      tags:
-        - PageBlocks
-      summary: Create PageBlock
-      description: Create a new PageBlock
-      operationId: createPageBlock
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreatePageBlockRequest'
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PageBlock'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
   /api/v1/website/page_blocks/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
@@ -1562,181 +306,6 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-    put:
-      tags:
-        - PageBlocks
-      summary: Update PageBlock (full)
-      operationId: updatePageBlock
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdatePageBlockRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PageBlock'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    patch:
-      tags:
-        - PageBlocks
-      summary: Update PageBlock (partial)
-      operationId: patchPageBlock
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchPageBlockRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PageBlock'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    delete:
-      tags:
-        - PageBlocks
-      summary: Delete PageBlock (soft)
-      operationId: deletePageBlock
-      responses:
-        '204':
-          description: Deleted
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/website/page_blocks/bulk:
-    post:
-      tags:
-        - PageBlocks
-      summary: Bulk create PageBlocks
-      operationId: bulkCreatePageBlocks
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/CreatePageBlockRequest'
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PageBlock'
-    put:
-      tags:
-        - PageBlocks
-      summary: Bulk update PageBlocks (full, atomic)
-      operationId: bulkUpdatePageBlocks
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                allOf:
-                  - type: object
-                    required: [id]
-                    properties:
-                      id:
-                        type: string
-                  - $ref: '#/components/schemas/UpdatePageBlockRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PageBlockBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-    patch:
-      tags:
-        - PageBlocks
-      summary: Bulk partial-update PageBlocks (atomic)
-      operationId: bulkPatchPageBlocks
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              oneOf:
-                - type: object
-                  required: [ids, patch]
-                  properties:
-                    ids:
-                      type: array
-                      items: { type: string }
-                    patch:
-                      type: object
-                      additionalProperties: true
-                - type: object
-                  required: [items]
-                  properties:
-                    items:
-                      type: array
-                      items:
-                        type: object
-                        required: [id, patch]
-                        properties:
-                          id: { type: string }
-                          patch: { type: object, additionalProperties: true }
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PageBlockBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/page_blocks/upsert:
-    post:
-      tags:
-        - PageBlocks
-      summary: Upsert PageBlock
-      operationId: upsertPageBlock
-      parameters:
-        - name: key_field
-          in: query
-          schema:
-            type: string
-        - name: key_value
-          in: query
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdatePageBlockRequest'
-      responses:
-        '200':
-          description: Upserted
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PageBlock'
-
   /api/v1/website/page_blocks/trash:
     get:
       tags:
@@ -1753,115 +322,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PageBlockList'
-
-  /api/v1/website/page_blocks/{id}/restore:
-    parameters:
-      - $ref: '#/components/parameters/IdParam'
-    post:
-      tags:
-        - PageBlocks
-      summary: Restore deleted PageBlock
-      operationId: restorePageBlock
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PageBlock'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/website/page_blocks/empty:
-    delete:
-      tags:
-        - PageBlocks
-      summary: Empty trash for PageBlocks
-      operationId: emptyTrashPageBlocks
-      responses:
-        '200':
-          description: Trash emptied
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  deleted_count:
-                    type: integer
-
-  /api/v1/website/page_blocks/delete/bulk:
-    post:
-      tags:
-        - PageBlocks
-      summary: Bulk soft-delete PageBlocks by ids (atomic)
-      operationId: bulkDeletePageBlocks
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Soft-deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  soft_deleted: { type: integer }
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/page_blocks/restore/bulk:
-    post:
-      tags:
-        - PageBlocks
-      summary: Bulk restore PageBlocks by ids (atomic)
-      operationId: bulkRestorePageBlocks
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PageBlockBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/page_blocks/restore/all:
-    post:
-      tags:
-        - PageBlocks
-      summary: Restore all soft-deleted PageBlocks
-      operationId: restoreAllPageBlocks
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  restored: { type: integer }
-
-  /api/v1/website/page_blocks/trash/bulk:
-    delete:
-      tags:
-        - PageBlocks
-      summary: Bulk permanently-delete PageBlocks from trash by ids (atomic)
-      operationId: bulkPermanentDeletePageBlocks
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Permanently deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  permanently_deleted: { type: integer }
-        '400':
-          $ref: '#/components/responses/BadRequest'
 
   /api/v1/website/redirects:
     get:
@@ -1885,30 +345,6 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-    post:
-      tags:
-        - Redirects
-      summary: Create Redirect
-      description: Create a new Redirect
-      operationId: createRedirect
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateRedirectRequest'
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Redirect'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
   /api/v1/website/redirects/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
@@ -1928,181 +364,6 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-    put:
-      tags:
-        - Redirects
-      summary: Update Redirect (full)
-      operationId: updateRedirect
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateRedirectRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Redirect'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    patch:
-      tags:
-        - Redirects
-      summary: Update Redirect (partial)
-      operationId: patchRedirect
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchRedirectRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Redirect'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    delete:
-      tags:
-        - Redirects
-      summary: Delete Redirect (soft)
-      operationId: deleteRedirect
-      responses:
-        '204':
-          description: Deleted
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/website/redirects/bulk:
-    post:
-      tags:
-        - Redirects
-      summary: Bulk create Redirects
-      operationId: bulkCreateRedirects
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/CreateRedirectRequest'
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Redirect'
-    put:
-      tags:
-        - Redirects
-      summary: Bulk update Redirects (full, atomic)
-      operationId: bulkUpdateRedirects
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                allOf:
-                  - type: object
-                    required: [id]
-                    properties:
-                      id:
-                        type: string
-                  - $ref: '#/components/schemas/UpdateRedirectRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RedirectBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-    patch:
-      tags:
-        - Redirects
-      summary: Bulk partial-update Redirects (atomic)
-      operationId: bulkPatchRedirects
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              oneOf:
-                - type: object
-                  required: [ids, patch]
-                  properties:
-                    ids:
-                      type: array
-                      items: { type: string }
-                    patch:
-                      type: object
-                      additionalProperties: true
-                - type: object
-                  required: [items]
-                  properties:
-                    items:
-                      type: array
-                      items:
-                        type: object
-                        required: [id, patch]
-                        properties:
-                          id: { type: string }
-                          patch: { type: object, additionalProperties: true }
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RedirectBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/redirects/upsert:
-    post:
-      tags:
-        - Redirects
-      summary: Upsert Redirect
-      operationId: upsertRedirect
-      parameters:
-        - name: key_field
-          in: query
-          schema:
-            type: string
-        - name: key_value
-          in: query
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateRedirectRequest'
-      responses:
-        '200':
-          description: Upserted
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Redirect'
-
   /api/v1/website/redirects/trash:
     get:
       tags:
@@ -2119,115 +380,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RedirectList'
-
-  /api/v1/website/redirects/{id}/restore:
-    parameters:
-      - $ref: '#/components/parameters/IdParam'
-    post:
-      tags:
-        - Redirects
-      summary: Restore deleted Redirect
-      operationId: restoreRedirect
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Redirect'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/website/redirects/empty:
-    delete:
-      tags:
-        - Redirects
-      summary: Empty trash for Redirects
-      operationId: emptyTrashRedirects
-      responses:
-        '200':
-          description: Trash emptied
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  deleted_count:
-                    type: integer
-
-  /api/v1/website/redirects/delete/bulk:
-    post:
-      tags:
-        - Redirects
-      summary: Bulk soft-delete Redirects by ids (atomic)
-      operationId: bulkDeleteRedirects
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Soft-deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  soft_deleted: { type: integer }
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/redirects/restore/bulk:
-    post:
-      tags:
-        - Redirects
-      summary: Bulk restore Redirects by ids (atomic)
-      operationId: bulkRestoreRedirects
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RedirectBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/redirects/restore/all:
-    post:
-      tags:
-        - Redirects
-      summary: Restore all soft-deleted Redirects
-      operationId: restoreAllRedirects
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  restored: { type: integer }
-
-  /api/v1/website/redirects/trash/bulk:
-    delete:
-      tags:
-        - Redirects
-      summary: Bulk permanently-delete Redirects from trash by ids (atomic)
-      operationId: bulkPermanentDeleteRedirects
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Permanently deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  permanently_deleted: { type: integer }
-        '400':
-          $ref: '#/components/responses/BadRequest'
 
   /api/v1/website/visitors:
     get:
@@ -2251,30 +403,6 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-    post:
-      tags:
-        - Visitors
-      summary: Create Visitor
-      description: Create a new Visitor
-      operationId: createVisitor
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateVisitorRequest'
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Visitor'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
   /api/v1/website/visitors/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
@@ -2294,181 +422,6 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-    put:
-      tags:
-        - Visitors
-      summary: Update Visitor (full)
-      operationId: updateVisitor
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateVisitorRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Visitor'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    patch:
-      tags:
-        - Visitors
-      summary: Update Visitor (partial)
-      operationId: patchVisitor
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchVisitorRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Visitor'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    delete:
-      tags:
-        - Visitors
-      summary: Delete Visitor (soft)
-      operationId: deleteVisitor
-      responses:
-        '204':
-          description: Deleted
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/website/visitors/bulk:
-    post:
-      tags:
-        - Visitors
-      summary: Bulk create Visitors
-      operationId: bulkCreateVisitors
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/CreateVisitorRequest'
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Visitor'
-    put:
-      tags:
-        - Visitors
-      summary: Bulk update Visitors (full, atomic)
-      operationId: bulkUpdateVisitors
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                allOf:
-                  - type: object
-                    required: [id]
-                    properties:
-                      id:
-                        type: string
-                  - $ref: '#/components/schemas/UpdateVisitorRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VisitorBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-    patch:
-      tags:
-        - Visitors
-      summary: Bulk partial-update Visitors (atomic)
-      operationId: bulkPatchVisitors
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              oneOf:
-                - type: object
-                  required: [ids, patch]
-                  properties:
-                    ids:
-                      type: array
-                      items: { type: string }
-                    patch:
-                      type: object
-                      additionalProperties: true
-                - type: object
-                  required: [items]
-                  properties:
-                    items:
-                      type: array
-                      items:
-                        type: object
-                        required: [id, patch]
-                        properties:
-                          id: { type: string }
-                          patch: { type: object, additionalProperties: true }
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VisitorBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/visitors/upsert:
-    post:
-      tags:
-        - Visitors
-      summary: Upsert Visitor
-      operationId: upsertVisitor
-      parameters:
-        - name: key_field
-          in: query
-          schema:
-            type: string
-        - name: key_value
-          in: query
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateVisitorRequest'
-      responses:
-        '200':
-          description: Upserted
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Visitor'
-
   /api/v1/website/visitors/trash:
     get:
       tags:
@@ -2485,115 +438,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VisitorList'
-
-  /api/v1/website/visitors/{id}/restore:
-    parameters:
-      - $ref: '#/components/parameters/IdParam'
-    post:
-      tags:
-        - Visitors
-      summary: Restore deleted Visitor
-      operationId: restoreVisitor
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Visitor'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/website/visitors/empty:
-    delete:
-      tags:
-        - Visitors
-      summary: Empty trash for Visitors
-      operationId: emptyTrashVisitors
-      responses:
-        '200':
-          description: Trash emptied
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  deleted_count:
-                    type: integer
-
-  /api/v1/website/visitors/delete/bulk:
-    post:
-      tags:
-        - Visitors
-      summary: Bulk soft-delete Visitors by ids (atomic)
-      operationId: bulkDeleteVisitors
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Soft-deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  soft_deleted: { type: integer }
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/visitors/restore/bulk:
-    post:
-      tags:
-        - Visitors
-      summary: Bulk restore Visitors by ids (atomic)
-      operationId: bulkRestoreVisitors
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VisitorBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/visitors/restore/all:
-    post:
-      tags:
-        - Visitors
-      summary: Restore all soft-deleted Visitors
-      operationId: restoreAllVisitors
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  restored: { type: integer }
-
-  /api/v1/website/visitors/trash/bulk:
-    delete:
-      tags:
-        - Visitors
-      summary: Bulk permanently-delete Visitors from trash by ids (atomic)
-      operationId: bulkPermanentDeleteVisitors
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Permanently deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  permanently_deleted: { type: integer }
-        '400':
-          $ref: '#/components/responses/BadRequest'
 
   /api/v1/website/visitor_tracks:
     get:
@@ -2617,30 +461,6 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-    post:
-      tags:
-        - VisitorTracks
-      summary: Create VisitorTrack
-      description: Create a new VisitorTrack
-      operationId: createVisitorTrack
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateVisitorTrackRequest'
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VisitorTrack'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
   /api/v1/website/visitor_tracks/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
@@ -2660,181 +480,6 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-    put:
-      tags:
-        - VisitorTracks
-      summary: Update VisitorTrack (full)
-      operationId: updateVisitorTrack
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateVisitorTrackRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VisitorTrack'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    patch:
-      tags:
-        - VisitorTracks
-      summary: Update VisitorTrack (partial)
-      operationId: patchVisitorTrack
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchVisitorTrackRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VisitorTrack'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    delete:
-      tags:
-        - VisitorTracks
-      summary: Delete VisitorTrack (soft)
-      operationId: deleteVisitorTrack
-      responses:
-        '204':
-          description: Deleted
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/website/visitor_tracks/bulk:
-    post:
-      tags:
-        - VisitorTracks
-      summary: Bulk create VisitorTracks
-      operationId: bulkCreateVisitorTracks
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/CreateVisitorTrackRequest'
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/VisitorTrack'
-    put:
-      tags:
-        - VisitorTracks
-      summary: Bulk update VisitorTracks (full, atomic)
-      operationId: bulkUpdateVisitorTracks
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                allOf:
-                  - type: object
-                    required: [id]
-                    properties:
-                      id:
-                        type: string
-                  - $ref: '#/components/schemas/UpdateVisitorTrackRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VisitorTrackBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-    patch:
-      tags:
-        - VisitorTracks
-      summary: Bulk partial-update VisitorTracks (atomic)
-      operationId: bulkPatchVisitorTracks
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              oneOf:
-                - type: object
-                  required: [ids, patch]
-                  properties:
-                    ids:
-                      type: array
-                      items: { type: string }
-                    patch:
-                      type: object
-                      additionalProperties: true
-                - type: object
-                  required: [items]
-                  properties:
-                    items:
-                      type: array
-                      items:
-                        type: object
-                        required: [id, patch]
-                        properties:
-                          id: { type: string }
-                          patch: { type: object, additionalProperties: true }
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VisitorTrackBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/visitor_tracks/upsert:
-    post:
-      tags:
-        - VisitorTracks
-      summary: Upsert VisitorTrack
-      operationId: upsertVisitorTrack
-      parameters:
-        - name: key_field
-          in: query
-          schema:
-            type: string
-        - name: key_value
-          in: query
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateVisitorTrackRequest'
-      responses:
-        '200':
-          description: Upserted
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VisitorTrack'
-
   /api/v1/website/visitor_tracks/trash:
     get:
       tags:
@@ -2851,115 +496,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VisitorTrackList'
-
-  /api/v1/website/visitor_tracks/{id}/restore:
-    parameters:
-      - $ref: '#/components/parameters/IdParam'
-    post:
-      tags:
-        - VisitorTracks
-      summary: Restore deleted VisitorTrack
-      operationId: restoreVisitorTrack
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VisitorTrack'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/website/visitor_tracks/empty:
-    delete:
-      tags:
-        - VisitorTracks
-      summary: Empty trash for VisitorTracks
-      operationId: emptyTrashVisitorTracks
-      responses:
-        '200':
-          description: Trash emptied
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  deleted_count:
-                    type: integer
-
-  /api/v1/website/visitor_tracks/delete/bulk:
-    post:
-      tags:
-        - VisitorTracks
-      summary: Bulk soft-delete VisitorTracks by ids (atomic)
-      operationId: bulkDeleteVisitorTracks
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Soft-deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  soft_deleted: { type: integer }
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/visitor_tracks/restore/bulk:
-    post:
-      tags:
-        - VisitorTracks
-      summary: Bulk restore VisitorTracks by ids (atomic)
-      operationId: bulkRestoreVisitorTracks
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VisitorTrackBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/visitor_tracks/restore/all:
-    post:
-      tags:
-        - VisitorTracks
-      summary: Restore all soft-deleted VisitorTracks
-      operationId: restoreAllVisitorTracks
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  restored: { type: integer }
-
-  /api/v1/website/visitor_tracks/trash/bulk:
-    delete:
-      tags:
-        - VisitorTracks
-      summary: Bulk permanently-delete VisitorTracks from trash by ids (atomic)
-      operationId: bulkPermanentDeleteVisitorTracks
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Permanently deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  permanently_deleted: { type: integer }
-        '400':
-          $ref: '#/components/responses/BadRequest'
 
   /api/v1/website/websites:
     get:
@@ -2983,30 +519,6 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-    post:
-      tags:
-        - Websites
-      summary: Create Website
-      description: Create a new Website
-      operationId: createWebsite
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateWebsiteRequest'
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Website'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
   /api/v1/website/websites/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
@@ -3026,181 +538,6 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-    put:
-      tags:
-        - Websites
-      summary: Update Website (full)
-      operationId: updateWebsite
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateWebsiteRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Website'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    patch:
-      tags:
-        - Websites
-      summary: Update Website (partial)
-      operationId: patchWebsite
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchWebsiteRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Website'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    delete:
-      tags:
-        - Websites
-      summary: Delete Website (soft)
-      operationId: deleteWebsite
-      responses:
-        '204':
-          description: Deleted
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/website/websites/bulk:
-    post:
-      tags:
-        - Websites
-      summary: Bulk create Websites
-      operationId: bulkCreateWebsites
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/CreateWebsiteRequest'
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Website'
-    put:
-      tags:
-        - Websites
-      summary: Bulk update Websites (full, atomic)
-      operationId: bulkUpdateWebsites
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                allOf:
-                  - type: object
-                    required: [id]
-                    properties:
-                      id:
-                        type: string
-                  - $ref: '#/components/schemas/UpdateWebsiteRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WebsiteBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-    patch:
-      tags:
-        - Websites
-      summary: Bulk partial-update Websites (atomic)
-      operationId: bulkPatchWebsites
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              oneOf:
-                - type: object
-                  required: [ids, patch]
-                  properties:
-                    ids:
-                      type: array
-                      items: { type: string }
-                    patch:
-                      type: object
-                      additionalProperties: true
-                - type: object
-                  required: [items]
-                  properties:
-                    items:
-                      type: array
-                      items:
-                        type: object
-                        required: [id, patch]
-                        properties:
-                          id: { type: string }
-                          patch: { type: object, additionalProperties: true }
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WebsiteBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/websites/upsert:
-    post:
-      tags:
-        - Websites
-      summary: Upsert Website
-      operationId: upsertWebsite
-      parameters:
-        - name: key_field
-          in: query
-          schema:
-            type: string
-        - name: key_value
-          in: query
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateWebsiteRequest'
-      responses:
-        '200':
-          description: Upserted
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Website'
-
   /api/v1/website/websites/trash:
     get:
       tags:
@@ -3217,115 +554,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/WebsiteList'
-
-  /api/v1/website/websites/{id}/restore:
-    parameters:
-      - $ref: '#/components/parameters/IdParam'
-    post:
-      tags:
-        - Websites
-      summary: Restore deleted Website
-      operationId: restoreWebsite
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Website'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/website/websites/empty:
-    delete:
-      tags:
-        - Websites
-      summary: Empty trash for Websites
-      operationId: emptyTrashWebsites
-      responses:
-        '200':
-          description: Trash emptied
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  deleted_count:
-                    type: integer
-
-  /api/v1/website/websites/delete/bulk:
-    post:
-      tags:
-        - Websites
-      summary: Bulk soft-delete Websites by ids (atomic)
-      operationId: bulkDeleteWebsites
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Soft-deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  soft_deleted: { type: integer }
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/websites/restore/bulk:
-    post:
-      tags:
-        - Websites
-      summary: Bulk restore Websites by ids (atomic)
-      operationId: bulkRestoreWebsites
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WebsiteBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/websites/restore/all:
-    post:
-      tags:
-        - Websites
-      summary: Restore all soft-deleted Websites
-      operationId: restoreAllWebsites
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  restored: { type: integer }
-
-  /api/v1/website/websites/trash/bulk:
-    delete:
-      tags:
-        - Websites
-      summary: Bulk permanently-delete Websites from trash by ids (atomic)
-      operationId: bulkPermanentDeleteWebsites
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Permanently deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  permanently_deleted: { type: integer }
-        '400':
-          $ref: '#/components/responses/BadRequest'
 
   /api/v1/website/website_members:
     get:
@@ -3349,30 +577,6 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-    post:
-      tags:
-        - WebsiteMembers
-      summary: Create WebsiteMember
-      description: Create a new WebsiteMember
-      operationId: createWebsiteMember
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateWebsiteMemberRequest'
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WebsiteMember'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
   /api/v1/website/website_members/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
@@ -3392,181 +596,6 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-    put:
-      tags:
-        - WebsiteMembers
-      summary: Update WebsiteMember (full)
-      operationId: updateWebsiteMember
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateWebsiteMemberRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WebsiteMember'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    patch:
-      tags:
-        - WebsiteMembers
-      summary: Update WebsiteMember (partial)
-      operationId: patchWebsiteMember
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchWebsiteMemberRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WebsiteMember'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    delete:
-      tags:
-        - WebsiteMembers
-      summary: Delete WebsiteMember (soft)
-      operationId: deleteWebsiteMember
-      responses:
-        '204':
-          description: Deleted
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/website/website_members/bulk:
-    post:
-      tags:
-        - WebsiteMembers
-      summary: Bulk create WebsiteMembers
-      operationId: bulkCreateWebsiteMembers
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/CreateWebsiteMemberRequest'
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/WebsiteMember'
-    put:
-      tags:
-        - WebsiteMembers
-      summary: Bulk update WebsiteMembers (full, atomic)
-      operationId: bulkUpdateWebsiteMembers
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                allOf:
-                  - type: object
-                    required: [id]
-                    properties:
-                      id:
-                        type: string
-                  - $ref: '#/components/schemas/UpdateWebsiteMemberRequest'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WebsiteMemberBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-    patch:
-      tags:
-        - WebsiteMembers
-      summary: Bulk partial-update WebsiteMembers (atomic)
-      operationId: bulkPatchWebsiteMembers
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              oneOf:
-                - type: object
-                  required: [ids, patch]
-                  properties:
-                    ids:
-                      type: array
-                      items: { type: string }
-                    patch:
-                      type: object
-                      additionalProperties: true
-                - type: object
-                  required: [items]
-                  properties:
-                    items:
-                      type: array
-                      items:
-                        type: object
-                        required: [id, patch]
-                        properties:
-                          id: { type: string }
-                          patch: { type: object, additionalProperties: true }
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WebsiteMemberBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/website_members/upsert:
-    post:
-      tags:
-        - WebsiteMembers
-      summary: Upsert WebsiteMember
-      operationId: upsertWebsiteMember
-      parameters:
-        - name: key_field
-          in: query
-          schema:
-            type: string
-        - name: key_value
-          in: query
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateWebsiteMemberRequest'
-      responses:
-        '200':
-          description: Upserted
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WebsiteMember'
-
   /api/v1/website/website_members/trash:
     get:
       tags:
@@ -3583,115 +612,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/WebsiteMemberList'
-
-  /api/v1/website/website_members/{id}/restore:
-    parameters:
-      - $ref: '#/components/parameters/IdParam'
-    post:
-      tags:
-        - WebsiteMembers
-      summary: Restore deleted WebsiteMember
-      operationId: restoreWebsiteMember
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WebsiteMember'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/website/website_members/empty:
-    delete:
-      tags:
-        - WebsiteMembers
-      summary: Empty trash for WebsiteMembers
-      operationId: emptyTrashWebsiteMembers
-      responses:
-        '200':
-          description: Trash emptied
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  deleted_count:
-                    type: integer
-
-  /api/v1/website/website_members/delete/bulk:
-    post:
-      tags:
-        - WebsiteMembers
-      summary: Bulk soft-delete WebsiteMembers by ids (atomic)
-      operationId: bulkDeleteWebsiteMembers
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Soft-deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  soft_deleted: { type: integer }
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/website_members/restore/bulk:
-    post:
-      tags:
-        - WebsiteMembers
-      summary: Bulk restore WebsiteMembers by ids (atomic)
-      operationId: bulkRestoreWebsiteMembers
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WebsiteMemberBulkResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /api/v1/website/website_members/restore/all:
-    post:
-      tags:
-        - WebsiteMembers
-      summary: Restore all soft-deleted WebsiteMembers
-      operationId: restoreAllWebsiteMembers
-      responses:
-        '200':
-          description: Restored
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  restored: { type: integer }
-
-  /api/v1/website/website_members/trash/bulk:
-    delete:
-      tags:
-        - WebsiteMembers
-      summary: Bulk permanently-delete WebsiteMembers from trash by ids (atomic)
-      operationId: bulkPermanentDeleteWebsiteMembers
-      requestBody:
-        $ref: '#/components/requestBodies/BatchIds'
-      responses:
-        '200':
-          description: Permanently deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  permanently_deleted: { type: integer }
-        '400':
-          $ref: '#/components/responses/BadRequest'
 
 components:
   schemas:
@@ -3745,8 +665,6 @@ components:
         - website_id
         - email
         - message
-        - notified
-        - metadata
       properties:
         website_id:
           type: string
@@ -3763,8 +681,6 @@ components:
           maxLength: 5000
         notified:
           type: boolean
-        metadata:
-          type: object
 
     UpdateContactMessageRequest:
       type: object
@@ -3773,7 +689,6 @@ components:
         - email
         - message
         - notified
-        - metadata
       properties:
         website_id:
           type: string
@@ -3790,8 +705,6 @@ components:
           maxLength: 5000
         notified:
           type: boolean
-        metadata:
-          type: object
 
     PatchContactMessageRequest:
       type: object
@@ -3811,8 +724,6 @@ components:
           maxLength: 5000
         notified:
           type: boolean
-        metadata:
-          type: object
 
     ContactMessageList:
       type: object
@@ -3890,12 +801,7 @@ components:
       required:
         - website_id
         - name
-        - new_window
-        - sequence
-        - visibility
         - required_member_roles
-        - is_mega_menu
-        - metadata
       properties:
         website_id:
           type: string
@@ -3926,8 +832,6 @@ components:
           type: array
         is_mega_menu:
           type: boolean
-        metadata:
-          type: object
 
     UpdateMenuRequest:
       type: object
@@ -3939,7 +843,6 @@ components:
         - visibility
         - required_member_roles
         - is_mega_menu
-        - metadata
       properties:
         website_id:
           type: string
@@ -3970,8 +873,6 @@ components:
           type: array
         is_mega_menu:
           type: boolean
-        metadata:
-          type: object
 
     PatchMenuRequest:
       type: object
@@ -4005,8 +906,6 @@ components:
           type: array
         is_mega_menu:
           type: boolean
-        metadata:
-          type: object
 
     MenuList:
       type: object
@@ -4195,11 +1094,7 @@ components:
         - key
         - url
         - title
-        - is_published
-        - website_indexed
-        - visibility
         - required_member_roles
-        - metadata
       properties:
         key:
           type: string
@@ -4226,8 +1121,6 @@ components:
           format: date-time
         website_indexed:
           type: boolean
-        visibility:
-          type: string
         required_member_roles:
           type: array
         forked_from:
@@ -4242,8 +1135,6 @@ components:
           nullable: true
           type: string
           format: uuid
-        metadata:
-          type: object
 
     UpdatePageRequest:
       type: object
@@ -4255,7 +1146,6 @@ components:
         - website_indexed
         - visibility
         - required_member_roles
-        - metadata
       properties:
         key:
           type: string
@@ -4298,8 +1188,6 @@ components:
           nullable: true
           type: string
           format: uuid
-        metadata:
-          type: object
 
     PatchPageRequest:
       type: object
@@ -4345,8 +1233,6 @@ components:
           nullable: true
           type: string
           format: uuid
-        metadata:
-          type: object
 
     PageList:
       type: object
@@ -4505,8 +1391,6 @@ components:
       required:
         - website_id
         - url_from
-        - redirect_type
-        - metadata
       properties:
         website_id:
           type: string
@@ -4514,8 +1398,6 @@ components:
         url_from:
           type: string
           maxLength: 500
-        redirect_type:
-          type: string
         url_to:
           nullable: true
           type: string
@@ -4524,8 +1406,6 @@ components:
           nullable: true
           type: string
           maxLength: 500
-        metadata:
-          type: object
 
     UpdateRedirectRequest:
       type: object
@@ -4533,7 +1413,6 @@ components:
         - website_id
         - url_from
         - redirect_type
-        - metadata
       properties:
         website_id:
           type: string
@@ -4551,8 +1430,6 @@ components:
           nullable: true
           type: string
           maxLength: 500
-        metadata:
-          type: object
 
     PatchRedirectRequest:
       type: object
@@ -4573,8 +1450,6 @@ components:
           nullable: true
           type: string
           maxLength: 500
-        metadata:
-          type: object
 
     RedirectList:
       type: object
@@ -4651,12 +1526,7 @@ components:
       required:
         - website_id
         - access_token
-        - kind
         - digest
-        - digest_algo
-        - visit_count
-        - last_connection_at
-        - metadata
       properties:
         website_id:
           type: string
@@ -4664,8 +1534,6 @@ components:
         access_token:
           type: string
           maxLength: 64
-        kind:
-          type: string
         digest:
           type: string
           maxLength: 128
@@ -4686,27 +1554,20 @@ components:
         last_connection_at:
           type: string
           format: date-time
-        metadata:
-          type: object
 
     UpdateVisitorRequest:
       type: object
       required:
         - website_id
-        - access_token
         - kind
         - digest
         - digest_algo
         - visit_count
         - last_connection_at
-        - metadata
       properties:
         website_id:
           type: string
           format: uuid
-        access_token:
-          type: string
-          maxLength: 64
         kind:
           type: string
         digest:
@@ -4729,8 +1590,6 @@ components:
         last_connection_at:
           type: string
           format: date-time
-        metadata:
-          type: object
 
     PatchVisitorRequest:
       type: object
@@ -4738,9 +1597,6 @@ components:
         website_id:
           type: string
           format: uuid
-        access_token:
-          type: string
-          maxLength: 64
         kind:
           type: string
         digest:
@@ -4763,8 +1619,6 @@ components:
         last_connection_at:
           type: string
           format: date-time
-        metadata:
-          type: object
 
     VisitorList:
       type: object
@@ -4819,7 +1673,6 @@ components:
       required:
         - visitor_id
         - url
-        - visited_at
       properties:
         visitor_id:
           type: string
@@ -4951,11 +1804,7 @@ components:
         - name
         - company_id
         - public_user_id
-        - default_lang_code
-        - homepage_url
         - contact_recipients
-        - sequence
-        - metadata
       properties:
         name:
           type: string
@@ -4987,8 +1836,6 @@ components:
         sequence:
           type: integer
           format: int32
-        metadata:
-          type: object
 
     UpdateWebsiteRequest:
       type: object
@@ -5000,7 +1847,6 @@ components:
         - homepage_url
         - contact_recipients
         - sequence
-        - metadata
       properties:
         name:
           type: string
@@ -5032,8 +1878,6 @@ components:
         sequence:
           type: integer
           format: int32
-        metadata:
-          type: object
 
     PatchWebsiteRequest:
       type: object
@@ -5068,8 +1912,6 @@ components:
         sequence:
           type: integer
           format: int32
-        metadata:
-          type: object
 
     WebsiteList:
       type: object
@@ -5122,8 +1964,6 @@ components:
       required:
         - website_id
         - portal_user_id
-        - role
-        - metadata
       properties:
         website_id:
           type: string
@@ -5131,10 +1971,6 @@ components:
         portal_user_id:
           type: string
           format: uuid
-        role:
-          type: string
-        metadata:
-          type: object
 
     UpdateWebsiteMemberRequest:
       type: object
@@ -5142,7 +1978,6 @@ components:
         - website_id
         - portal_user_id
         - role
-        - metadata
       properties:
         website_id:
           type: string
@@ -5152,8 +1987,6 @@ components:
           format: uuid
         role:
           type: string
-        metadata:
-          type: object
 
     PatchWebsiteMemberRequest:
       type: object
@@ -5166,8 +1999,6 @@ components:
           format: uuid
         role:
           type: string
-        metadata:
-          type: object
 
     WebsiteMemberList:
       type: object

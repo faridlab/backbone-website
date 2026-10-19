@@ -38,6 +38,7 @@ pub struct CreateContactMessageDto {
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     pub message: String,
     #[cfg_attr(feature = "openapi", schema(example = true))]
+    #[serde(default)]
     pub notified: bool,
 }
 
@@ -81,8 +82,8 @@ pub struct PatchContactMessageDto {
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     #[serde(skip_serializing_if = "Option::is_none", alias = "website_id")]
     pub website_id: Option<Uuid>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub name: Option<String>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option")]
+    pub name: Option<Option<String>>,
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub email: Option<String>,
@@ -262,12 +263,4 @@ impl backbone_core::ApplyUpdateDto<UpdateContactMessageDto> for ContactMessage {
         Ok(self)
     }
 }
-
-// =============================================================================
-// Custom DTOs
-// =============================================================================
-
-// Add custom DTOs specific to ContactMessage here.
-// This section will be preserved during regeneration.
-// >>> END CUSTOM DTOs
 
